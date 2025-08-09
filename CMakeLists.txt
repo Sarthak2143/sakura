@@ -36,15 +36,15 @@ find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui videoio)
 find_package(cpr REQUIRED)
 find_package(Threads REQUIRED)
 
-add_library(Sakura STATIC
+add_library(SakuraLib STATIC
   sakura.cpp
 )
 
-target_include_directories(Sakura PUBLIC
+target_include_directories(SakuraLib PUBLIC
   ${OpenCV_INCLUDE_DIRS}
 )
 
-target_link_libraries(Sakura PRIVATE
+target_link_libraries(SakuraLib PRIVATE
   cpr::cpr
   ${OpenCV_LIBS}
   SIXEL::sixel
@@ -61,7 +61,7 @@ target_include_directories(sakura PRIVATE
 )
 
 target_link_libraries(sakura PRIVATE
-  Sakura
+  SakuraLib
   ${OpenCV_LIBS}
   SIXEL::sixel
   Threads::Threads
