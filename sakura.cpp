@@ -86,6 +86,32 @@ bool Sakura::preprocessAndResize(const cv::Mat &img,
   return !resized.empty();
 }
 
+// Helper to get header and value out of headers, Ex: "header: value" -> header, value
+std::pair<std::string, std::string> Sakura::splitHeader(const std::string &headerLine) {
+    size_t pos = headerLine.find(':');
+    if (pos == std::string::npos) {
+        return {"", ""};
+    }
+
+    std::string header = headerLine.substr(0, pos);
+    std::string value = headerLine.substr(pos + 1);
+
+    auto trim = [](std::string &s) {
+        s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+            return !std::isspace(ch);
+        }));
+        s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+            return !std::isspace(ch);
+        }).base(), s.end());
+    };
+
+    trim(header);
+    trim(value);
+
+    return {header, value};
+}
+
+
 bool Sakura::renderFromUrl(std::string_view url,
                            const RenderOptions &options) const {
   const auto response = cpr::Get(cpr::Url{std::string(url)});
@@ -624,8 +650,12 @@ bool Sakura::renderGifFromUrl(std::string_view gifUrl,
 }
 
 bool Sakura::renderVideoFromUrl(std::string_view videoUrl,
-                                const RenderOptions &options) const {
-  const auto response = cpr::Get(cpr::Url{std::string(videoUrl)});
+                                const RenderOptions &options,
+                                std::string headers) const {
+  std::pair<std::string, std::string> hv = splitHeader(headers);
+  std::string header = hv.first;
+  std::string value  = hv.second;
+  const auto response = cpr::Get(cpr::Url{std::string(videoUrl)}, cpr::Header{{header, value}});
   if (response.status_code != 200) {
     std::cerr << "Failed to download video. Status: " << response.status_code
               << std::endl;

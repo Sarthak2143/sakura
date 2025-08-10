@@ -37,12 +37,16 @@ std::pair<int, int> calculateBestFitSize(int contentWidth, int contentHeight,
   return {outw, outh};
 }
 
-bool process_image(std::string url) {
+bool process_image(std::string url, std::string headers) {
   Sakura sakura;
   bool stat = false;
   auto [termPixW, termPixH] = getTerminalPixelSize();
 
-  auto response = cpr::Get(cpr::Url{url});
+  std::pair<std::string, std::string> hv = Sakura::splitHeader(headers);
+  std::string header = hv.first;
+  std::string value  = hv.second;
+
+  auto response = cpr::Get(cpr::Url{url}, cpr::Header{{header, value}});
   if (response.status_code != 200) {
     std::cerr << "Failed to download image. Status: " << response.status_code
               << std::endl;
@@ -86,7 +90,7 @@ bool process_gif(std::string url) {
   return sakura.renderGifFromUrl(url, options);
 }
 
-bool process_video(std::string url) {
+bool process_video(std::string url, std::string headers) {
   Sakura sakura;
   bool stat = false;
   auto [termPixW, termPixH] = getTerminalPixelSize();
@@ -100,7 +104,7 @@ bool process_video(std::string url) {
   options.width = termPixW;
   options.height = termPixH;
 
-  return sakura.renderVideoFromUrl(url, options);
+  return sakura.renderVideoFromUrl(url, options, headers);
 }
 
 bool process_local_video(std::string path) {
@@ -129,10 +133,12 @@ int main(int argc, char **argv) {
       {"gif",         required_argument, 0, 'g'},
       {"video",       required_argument, 0, 'v'},
       {"local-video", required_argument, 0, 'l'},
+      {"headers",     required_argument, 0, 'x'},
       {0, 0, 0, 0}
   };
   
   std::string video_path, image_path;
+  std::string headers;
   bool show_help = false;
   
   int opt;
@@ -140,21 +146,22 @@ int main(int argc, char **argv) {
   bool stat = false;
 
   if (argc > 1) {
-    while ((opt = getopt_long(argc, argv, "hv:i:g:l:", long_options, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hv:i:g:l:x:", long_options, &option_index)) != -1) {
       switch (opt) {
         case 'h':
           std::cout << "Usage: sakura [options]\n"
                     << "Options:\n"
-                    << "  -h, --help                 Show help message\n"
-                    << "  -i, --image <path>         Process image file\n"
-                    << "  -g, --gif <path>           Process GIF file\n"
-                    << "  -v, --video <path>         Process video file\n"
-                    << "  -l, --local-video <path>   Process local video file\n"
+                    << "  -h, --help                      Show help message\n"
+                    << "  -i, --image <path>              Process image file\n"
+                    << "  -g, --gif <path>                Process GIF file\n"
+                    << "  -v, --video <path>              Process video file\n"
+                    << "  -l, --local-video <path>        Process local video file\n"
+                    << "  -x, --headers 'header: value'   Add headers to request\n"
           ;
           return 0;
                   
         case 'i':
-          stat = process_image( optarg );
+          stat = process_image( optarg, headers );
           break;
         
         case 'g':
@@ -162,11 +169,15 @@ int main(int argc, char **argv) {
           break;
         
         case 'v':
-          stat = process_video( optarg );
+          stat = process_video( optarg, headers );
           break;
         
         case 'l':
           stat = process_local_video( optarg );
+          break;
+
+        case 'x':
+          headers = optarg;
           break;
           
         case '?':
@@ -209,7 +220,7 @@ int main(int argc, char **argv) {
     std::cout << "Enter image URL: ";
     std::cin >> url;
     std::cout << "Rendering image...\n";
-    stat = process_image(url);
+    stat = process_image(url, headers);
     break;
   }
   case 2: {
@@ -223,7 +234,7 @@ int main(int argc, char **argv) {
     std::cout << "Enter video URL: ";
     std::cin >> videoUrl;
     std::cout << "Rendering video from URL (with audio)...\n";
-    stat = process_video(videoUrl);
+    stat = process_video(videoUrl, headers);
     break;
   }
   case 4: {
