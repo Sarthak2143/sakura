@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <utility>
 
 class Sakura {
 public:
@@ -25,6 +26,7 @@ public:
     double terminalAspectRatio = 1.0;
   };
 
+  static std::pair<std::string, std::string> splitHeader(const std::string &headerLine);
   bool renderFromUrl(std::string_view url, const RenderOptions &options) const;
   bool renderFromUrl(std::string_view url) const;
   bool renderFromMat(const cv::Mat &img, const RenderOptions &options) const;
@@ -33,7 +35,8 @@ public:
   bool renderGifFromUrl(std::string_view gifUrl,
                         const RenderOptions &options) const;
   bool renderVideoFromUrl(std::string_view videoUrl,
-                          const RenderOptions &options) const;
+                          const RenderOptions &options,
+                          std::string headers) const;
   bool renderVideoFromFile(std::string_view videoPath,
                            const RenderOptions &options) const;
   std::vector<std::string> renderImageToLines(const cv::Mat &img,
