@@ -52,7 +52,10 @@ bool Sakura::preprocessAndResize(const cv::Mat &img,
                                  int &target_width, int &target_height) const {
   cv::Mat adjusted;
   if (options.contrast != 1.0 || options.brightness != 0.0) {
-    img.convertTo(adjusted, -1, options.contrast * 1.2, options.brightness);
+    // Clamp contrast to prevent overflow
+    double safe_contrast = std::clamp(options.contrast, 0.1, 10.0);
+    double safe_brightness = std::clamp(options.brightness, -100.0, 100.0);
+    img.convertTo(adjusted, -1, safe_contrast, safe_brightness);
   } else {
     adjusted = img;
   }
@@ -532,13 +535,20 @@ std::string Sakura::renderVideoUltraFast(const cv::Mat &frame) const {
       const cv::Vec3b bottom_pixel =
           (y + 1 < height) ? frame.at<cv::Vec3b>(y + 1, x) : top_pixel;
 
-      // Use 24-bit RGB terminal colors
-      output += "\033[48;2;" + std::to_string(bottom_pixel[2]) + ";" +
-                std::to_string(bottom_pixel[1]) + ";" +
-                std::to_string(bottom_pixel[0]) + "m\033[38;2;" +
-                std::to_string(top_pixel[2]) + ";" +
-                std::to_string(top_pixel[1]) + ";" +
-                std::to_string(top_pixel[0]) + "m▀";
+      // Use 24-bit RGB terminal colors - optimized string building
+      output += "\033[48;2;";
+      output += std::to_string(bottom_pixel[2]);
+      output += ";";
+      output += std::to_string(bottom_pixel[1]);
+      output += ";";
+      output += std::to_string(bottom_pixel[0]);
+      output += "m\033[38;2;";
+      output += std::to_string(top_pixel[2]);
+      output += ";";
+      output += std::to_string(top_pixel[1]);
+      output += ";";
+      output += std::to_string(top_pixel[0]);
+      output += "m▀";
     }
     output += "\033[0m\n"; // Reset colors and newline
   }
@@ -616,8 +626,11 @@ bool Sakura::renderGifFromUrl(std::string_view gifUrl,
   const int gif_width = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH));
   const int gif_height = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
   double fps = cap.get(cv::CAP_PROP_FPS);
-  if (fps <= 0)
+  // Ensure FPS is within reasonable bounds to prevent division by zero and
+  // timing issues
+  if (fps <= 0 || fps > 1000) {
     fps = 10.0; // Default GIF speed
+  }
 
   const double gifAspect = static_cast<double>(gif_width) / gif_height;
   const double termAspect = static_cast<double>(options.width) / options.height;
@@ -706,14 +719,35 @@ bool Sakura::renderVideoFromUrl(std::string_view videoUrl,
 
   const std::string tempFile =
       "/tmp/sakura_video_" + std::to_string(std::time(nullptr));
+
+  // Use RAII for automatic cleanup of temporary file
+  struct TempFileGuard {
+    std::string filename;
+    TempFileGuard(const std::string &name) : filename(name) {}
+    ~TempFileGuard() {
+      if (!filename.empty()) {
+        std::remove(filename.c_str());
+      }
+    }
+  };
+
+  TempFileGuard guard(tempFile);
+
   std::ofstream file(tempFile, std::ios::binary);
+  if (!file.is_open()) {
+    std::cerr << "Failed to create temporary file: " << tempFile << std::endl;
+    return false;
+  }
+
   file.write(response.text.data(), response.text.size());
   file.close();
 
-  const bool result = renderVideoFromFile(tempFile, options);
+  if (!file.good()) {
+    std::cerr << "Failed to write to temporary file: " << tempFile << std::endl;
+    return false;
+  }
 
-  std::remove(tempFile.c_str());
-  return result;
+  return renderVideoFromFile(tempFile, options);
 }
 
 bool Sakura::renderVideoFromFile(std::string_view videoPath,
