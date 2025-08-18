@@ -53,13 +53,13 @@ bool process_image(std::string url) {
   if (response.status_code != 200) {
     std::cerr << "Failed to download image. Status: " << response.status_code
               << std::endl;
-    return 1;
+    return false;
   }
   std::vector<uchar> imgData(response.text.begin(), response.text.end());
   cv::Mat img = cv::imdecode(imgData, cv::IMREAD_COLOR);
   if (img.empty()) {
     std::cerr << "Failed to decode image" << std::endl;
-    return 1;
+    return false;
   }
 
   // calculate proper dimensions for this image
