@@ -511,8 +511,7 @@ std::string Sakura::renderSixel(const cv::Mat &img, int paletteSize,
   return sixel_output_string;
 }
 
-// Ultra-fast video renderer using direct terminal colors (no SIXEL)
-// only ascii blocks for now with ~0% fps drops
+// Ultra-fast video renderer using enhanced ASCII blocks with improved quality
 std::string Sakura::renderVideoUltraFast(const cv::Mat &frame) const {
   if (frame.empty() || frame.channels() != 3) {
     return "";
@@ -522,16 +521,295 @@ std::string Sakura::renderVideoUltraFast(const cv::Mat &frame) const {
   const int width = frame.cols;
 
   std::string output;
-  output.reserve(height * width * 25); // Pre-allocate for speed
+  output.reserve(height * width * 30); // Increased for better block characters
 
-  // Use Unicode block characters for high density rendering
-  for (int y = 0; y < height; y += 2) { // Process 2 rows at a time
+  // Enhanced Unicode block characters for higher quality rendering
+  const std::vector<std::string> block_chars = {
+    " ",      // 0/8 filled
+    "▁",      // 1/8 filled (lower)
+    "▂",      // 2/8 filled (lower)
+    "▃",      // 3/8 filled (lower)
+    "▄",      // 4/8 filled (lower half)
+    "▅",      // 5/8 filled (lower)
+    "▆",      // 6/8 filled (lower)
+    "▇",      // 7/8 filled (lower)
+    "█",      // 8/8 filled (full)
+    "▀",      // upper half
+    "▌",      // left half
+    "▐",      // right half
+    "▖",      // lower left quarter
+    "▗",      // lower right quarter
+    "▘",      // upper left quarter
+    "▙",      // left + lower right
+    "▚",      // upper left + lower right
+    "▛",      // upper + lower left
+    "▜",      // upper + lower right
+    "▝",      // upper right quarter
+    "▞",      // upper right + lower left
+    "▟"       // left + upper right
+  };
+
+  // Process 2 rows at a time for better density
+  for (int y = 0; y < height; y += 2) {
     for (int x = 0; x < width; ++x) {
       const cv::Vec3b top_pixel = frame.at<cv::Vec3b>(y, x);
       const cv::Vec3b bottom_pixel =
           (y + 1 < height) ? frame.at<cv::Vec3b>(y + 1, x) : top_pixel;
 
-      // Use 24-bit RGB terminal colors - optimized string building
+      // Calculate brightness for better character selection
+      const int top_brightness = (top_pixel[0] + top_pixel[1] + top_pixel[2]) / 3;
+      const int bottom_brightness = (bottom_pixel[0] + bottom_pixel[1] + bottom_pixel[2]) / 3;
+      
+      // Enhanced character selection based on brightness patterns
+      std::string chosen_char;
+      cv::Vec3b fg_color, bg_color;
+      
+      if (std::abs(top_brightness - bottom_brightness) < 20) {
+        // Similar brightness - use solid block with average color
+        const int avg_brightness = (top_brightness + bottom_brightness) / 2;
+        if (avg_brightness < 32) {
+          chosen_char = " ";
+          bg_color = cv::Vec3b(0, 0, 0);
+          fg_color = cv::Vec3b(0, 0, 0);
+        } else if (avg_brightness < 96) {
+          chosen_char = "▒"; // Medium shade
+          fg_color = cv::Vec3b(
+            (top_pixel[0] + bottom_pixel[0]) / 2,
+            (top_pixel[1] + bottom_pixel[1]) / 2,
+            (top_pixel[2] + bottom_pixel[2]) / 2
+          );
+          bg_color = cv::Vec3b(0, 0, 0);
+        } else if (avg_brightness < 160) {
+          chosen_char = "▓"; // Dark shade
+          fg_color = cv::Vec3b(
+            (top_pixel[0] + bottom_pixel[0]) / 2,
+            (top_pixel[1] + bottom_pixel[1]) / 2,
+            (top_pixel[2] + bottom_pixel[2]) / 2
+          );
+          bg_color = cv::Vec3b(0, 0, 0);
+        } else {
+          chosen_char = "█"; // Full block
+          fg_color = cv::Vec3b(
+            (top_pixel[0] + bottom_pixel[0]) / 2,
+            (top_pixel[1] + bottom_pixel[1]) / 2,
+            (top_pixel[2] + bottom_pixel[2]) / 2
+          );
+          bg_color = cv::Vec3b(0, 0, 0);
+        }
+      } else {
+        // Different brightness - use half blocks or quarters
+        if (top_brightness > bottom_brightness) {
+          // Top is brighter
+          if (top_brightness - bottom_brightness > 80) {
+            chosen_char = "▀"; // Upper half block
+            fg_color = top_pixel;
+            bg_color = bottom_pixel;
+          } else {
+            chosen_char = "▄"; // Lower half block  
+            fg_color = bottom_pixel;
+            bg_color = top_pixel;
+          }
+        } else {
+          // Bottom is brighter
+          if (bottom_brightness - top_brightness > 80) {
+            chosen_char = "▄"; // Lower half block
+            fg_color = bottom_pixel;
+            bg_color = top_pixel;
+          } else {
+            chosen_char = "▀"; // Upper half block
+            fg_color = top_pixel;
+            bg_color = bottom_pixel;
+          }
+        }
+      }
+
+      // Build optimized color string
+      output += "\033[48;2;";
+      output += std::to_string(bg_color[2]);
+      output += ";";
+      output += std::to_string(bg_color[1]);
+      output += ";";
+      output += std::to_string(bg_color[0]);
+      output += "m\033[38;2;";
+      output += std::to_string(fg_color[2]);
+      output += ";";
+      output += std::to_string(fg_color[1]);
+      output += ";";
+      output += std::to_string(fg_color[0]);
+      output += "m";
+      output += chosen_char;
+    }
+    output += "\033[0m\n"; // Reset colors and newline
+  }
+
+  return output;
+}
+
+// Enhanced video renderer with multiple quality modes and advanced block characters
+std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOptions &options) const {
+  if (frame.empty()) {
+    return "";
+  }
+
+  cv::Mat working_frame;
+  if (frame.channels() != 3) {
+    if (frame.channels() == 1) {
+      cv::cvtColor(frame, working_frame, cv::COLOR_GRAY2BGR);
+    } else if (frame.channels() == 4) {
+      cv::cvtColor(frame, working_frame, cv::COLOR_BGRA2BGR);
+    } else {
+      return "";
+    }
+  } else {
+    working_frame = frame;
+  }
+
+  const int height = working_frame.rows;
+  const int width = working_frame.cols;
+
+  std::string output;
+  
+  // Choose rendering approach based on options
+  switch (options.mode) {
+    case EXACT:
+      return renderExactVideo(working_frame);
+    case ASCII_COLOR:
+      return renderAsciiColorVideo(working_frame);
+    case ASCII_GRAY:
+      return renderAsciiGrayVideo(working_frame, options);
+    case ULTRA_FAST:
+    default:
+      // Fall back to ultra-fast with enhanced quality
+      output.reserve(height * width * 30);
+      
+      // Advanced block character selection with dithering
+      const std::vector<std::string> advanced_blocks = {
+        " ", "░", "▒", "▓", "█",  // Basic density blocks
+        "▁", "▂", "▃", "▄", "▅", "▆", "▇",  // Lower blocks
+        "▀", "▔",  // Upper blocks
+        "▌", "▐",  // Half blocks
+        "▖", "▗", "▘", "▝",  // Quarter blocks
+        "▙", "▚", "▛", "▜", "▞", "▟"  // Complex blocks
+      };
+
+      for (int y = 0; y < height; y += 2) {
+        for (int x = 0; x < width; ++x) {
+          const cv::Vec3b top_pixel = working_frame.at<cv::Vec3b>(y, x);
+          const cv::Vec3b bottom_pixel = (y + 1 < height) ? 
+              working_frame.at<cv::Vec3b>(y + 1, x) : top_pixel;
+
+          // Enhanced brightness calculation with proper weighting
+          const double top_luma = 0.299 * top_pixel[2] + 0.587 * top_pixel[1] + 0.114 * top_pixel[0];
+          const double bottom_luma = 0.299 * bottom_pixel[2] + 0.587 * bottom_pixel[1] + 0.114 * bottom_pixel[0];
+          
+          // Smart character selection based on luminance patterns
+          std::string chosen_char;
+          cv::Vec3b fg_color, bg_color;
+          
+          const double luma_diff = std::abs(top_luma - bottom_luma);
+          const double avg_luma = (top_luma + bottom_luma) / 2.0;
+          
+          if (luma_diff < 15.0) {
+            // Similar luminance - use density blocks
+            if (avg_luma < 32) {
+              chosen_char = " ";
+              bg_color = cv::Vec3b(0, 0, 0);
+              fg_color = cv::Vec3b(0, 0, 0);
+            } else if (avg_luma < 64) {
+              chosen_char = "░";
+              fg_color = cv::Vec3b((top_pixel[0] + bottom_pixel[0]) / 2,
+                                 (top_pixel[1] + bottom_pixel[1]) / 2,
+                                 (top_pixel[2] + bottom_pixel[2]) / 2);
+              bg_color = cv::Vec3b(0, 0, 0);
+            } else if (avg_luma < 128) {
+              chosen_char = "▒";
+              fg_color = cv::Vec3b((top_pixel[0] + bottom_pixel[0]) / 2,
+                                 (top_pixel[1] + bottom_pixel[1]) / 2,
+                                 (top_pixel[2] + bottom_pixel[2]) / 2);
+              bg_color = cv::Vec3b(0, 0, 0);
+            } else if (avg_luma < 192) {
+              chosen_char = "▓";
+              fg_color = cv::Vec3b((top_pixel[0] + bottom_pixel[0]) / 2,
+                                 (top_pixel[1] + bottom_pixel[1]) / 2,
+                                 (top_pixel[2] + bottom_pixel[2]) / 2);
+              bg_color = cv::Vec3b(0, 0, 0);
+            } else {
+              chosen_char = "█";
+              fg_color = cv::Vec3b((top_pixel[0] + bottom_pixel[0]) / 2,
+                                 (top_pixel[1] + bottom_pixel[1]) / 2,
+                                 (top_pixel[2] + bottom_pixel[2]) / 2);
+              bg_color = cv::Vec3b(0, 0, 0);
+            }
+          } else {
+            // Different luminance - use directional blocks
+            if (top_luma > bottom_luma) {
+              if (luma_diff > 100) {
+                chosen_char = "▀";
+                fg_color = top_pixel;
+                bg_color = bottom_pixel;
+              } else if (luma_diff > 50) {
+                chosen_char = "▞"; // Diagonal pattern
+                fg_color = top_pixel;
+                bg_color = bottom_pixel;
+              } else {
+                chosen_char = "░";
+                fg_color = top_pixel;
+                bg_color = bottom_pixel;
+              }
+            } else {
+              if (luma_diff > 100) {
+                chosen_char = "▄";
+                fg_color = bottom_pixel;
+                bg_color = top_pixel;
+              } else if (luma_diff > 50) {
+                chosen_char = "▚"; // Diagonal pattern
+                fg_color = bottom_pixel;
+                bg_color = top_pixel;
+              } else {
+                chosen_char = "▒";
+                fg_color = bottom_pixel;
+                bg_color = top_pixel;
+              }
+            }
+          }
+
+          // Optimized ANSI color output
+          output += "\033[48;2;";
+          output += std::to_string(bg_color[2]);
+          output += ";";
+          output += std::to_string(bg_color[1]);
+          output += ";";
+          output += std::to_string(bg_color[0]);
+          output += "m\033[38;2;";
+          output += std::to_string(fg_color[2]);
+          output += ";";
+          output += std::to_string(fg_color[1]);
+          output += ";";
+          output += std::to_string(fg_color[0]);
+          output += "m";
+          output += chosen_char;
+        }
+        output += "\033[0m\n";
+      }
+      break;
+  }
+
+  return output;
+}
+
+// Helper methods for different video rendering modes
+std::string Sakura::renderExactVideo(const cv::Mat &frame) const {
+  const int height = frame.rows / 2;
+  const int width = frame.cols;
+  std::string output;
+  output.reserve(width * height * 35);
+
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      const cv::Vec3b top_pixel = frame.at<cv::Vec3b>(2 * y, x);
+      const cv::Vec3b bottom_pixel = (2 * y + 1 < frame.rows) ? 
+          frame.at<cv::Vec3b>(2 * y + 1, x) : top_pixel;
+
       output += "\033[48;2;";
       output += std::to_string(bottom_pixel[2]);
       output += ";";
@@ -546,7 +824,79 @@ std::string Sakura::renderVideoUltraFast(const cv::Mat &frame) const {
       output += std::to_string(top_pixel[0]);
       output += "m▀";
     }
-    output += "\033[0m\n"; // Reset colors and newline
+    output += "\033[0m\n";
+  }
+
+  return output;
+}
+
+std::string Sakura::renderAsciiColorVideo(const cv::Mat &frame) const {
+  const int height = frame.rows;
+  const int width = frame.cols;
+  std::string output;
+  output.reserve(width * height * 25);
+
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      const cv::Vec3b pixel = frame.at<cv::Vec3b>(y, x);
+      output += "\033[48;2;";
+      output += std::to_string(pixel[2]);
+      output += ";";
+      output += std::to_string(pixel[1]);
+      output += ";";
+      output += std::to_string(pixel[0]);
+      output += "m ";
+    }
+    output += "\033[0m\n";
+  }
+
+  return output;
+}
+
+std::string Sakura::renderAsciiGrayVideo(const cv::Mat &frame, const RenderOptions &options) const {
+  cv::Mat gray;
+  cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+  
+  const std::string &charSet = getCharSet(options.style);
+  const int num_chars = static_cast<int>(charSet.size());
+  const int height = gray.rows;
+  const int width = gray.cols;
+  
+  std::string output;
+  output.reserve(width * height);
+
+  // Simple Floyd-Steinberg dithering for video
+  if (options.dither == FLOYD_STEINBERG) {
+    cv::Mat error = cv::Mat::zeros(height, width, CV_32F);
+    gray.convertTo(gray, CV_32F, 1.0 / 255.0);
+
+    for (int y = 0; y < height; ++y) {
+      for (int x = 0; x < width; ++x) {
+        float old_value = std::clamp(gray.at<float>(y, x) + error.at<float>(y, x), 0.0f, 1.0f);
+        int level = std::clamp(static_cast<int>(std::round(old_value * (num_chars - 1))), 0, num_chars - 1);
+        float chosen_value = static_cast<float>(level) / (num_chars - 1);
+        float err = old_value - chosen_value;
+
+        // Distribute error (simplified for performance)
+        if (x + 1 < width) error.at<float>(y, x + 1) += err * 0.4375f; // 7/16
+        if (y + 1 < height && x > 0) error.at<float>(y + 1, x - 1) += err * 0.1875f; // 3/16
+        if (y + 1 < height) error.at<float>(y + 1, x) += err * 0.3125f; // 5/16
+        if (y + 1 < height && x + 1 < width) error.at<float>(y + 1, x + 1) += err * 0.0625f; // 1/16
+
+        output += charSet[level];
+      }
+      output += '\n';
+    }
+  } else {
+    // Simple threshold mapping for speed
+    for (int y = 0; y < height; ++y) {
+      for (int x = 0; x < width; ++x) {
+        const int intensity = gray.at<uchar>(y, x);
+        const int idx = (intensity * (num_chars - 1)) / 255;
+        output += charSet[idx];
+      }
+      output += '\n';
+    }
   }
 
   return output;
@@ -762,8 +1112,12 @@ bool Sakura::renderVideoFromFile(std::string_view videoPath,
   if (fps <= 0)
     fps = 30.0;
 
-  std::cout << "Video: " << fps << " FPS, " << frame_count
-            << " frames (ULTRA-FAST MODE)" << std::endl;
+  std::cout << "Video: " << fps << " FPS, " << frame_count << " frames";
+  if (options.mode == ULTRA_FAST) {
+    std::cout << " (ULTRA-FAST MODE)" << std::endl;
+  } else {
+    std::cout << " (ENHANCED QUALITY MODE)" << std::endl;
+  }
   std::cout << "Target dimensions: " << options.width << "x" << options.height
             << std::endl;
 
@@ -796,8 +1150,15 @@ bool Sakura::renderVideoFromFile(std::string_view videoPath,
     cv::resize(frame, resized_frame, cv::Size(target_width, target_height), 0,
                0, cv::INTER_NEAREST);
 
-    // only using ascii blocks for now
-    const std::string frame_output = renderVideoUltraFast(resized_frame);
+    // Choose rendering method based on options
+    std::string frame_output;
+    if (options.mode == ULTRA_FAST) {
+      frame_output = renderVideoUltraFast(resized_frame);
+    } else {
+      // Use enhanced renderer for better quality
+      frame_output = renderVideoEnhanced(resized_frame, options);
+    }
+    
     if (frame_output.empty()) {
       std::cerr << "Frame output is empty!" << std::endl;
       continue;
