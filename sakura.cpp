@@ -498,12 +498,7 @@ std::string Sakura::renderSixel(const cv::Mat &img, int paletteSize,
     return "";
   }
 
-  // Manually insert raster attributes for older libsixel versions to support
-  // scaling.
   if (output_width > 0 && output_height > 0) {
-    // The sixel data starts with DCS 'q', then raster attributes, then palette.
-    // We find the palette start '#' and insert the raster attributes before it.
-    // The format is "pan;pad;ph;pv
     size_t pos = sixel_output_string.find('#');
     if (pos != std::string::npos) {
       std::string raster_attrs =
@@ -517,6 +512,7 @@ std::string Sakura::renderSixel(const cv::Mat &img, int paletteSize,
 }
 
 // Ultra-fast video renderer using direct terminal colors (no SIXEL)
+// only ascii blocks for now with ~0% fps drops
 std::string Sakura::renderVideoUltraFast(const cv::Mat &frame) const {
   if (frame.empty() || frame.channels() != 3) {
     return "";
@@ -556,6 +552,8 @@ std::string Sakura::renderVideoUltraFast(const cv::Mat &frame) const {
   return output;
 }
 
+
+// TODO: make the grids smoother
 bool Sakura::renderGridFromUrls(const std::vector<std::string> &urls, int cols,
                                 const RenderOptions &options) const {
   if (urls.empty() || cols <= 0) {
@@ -626,8 +624,6 @@ bool Sakura::renderGifFromUrl(std::string_view gifUrl,
   const int gif_width = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH));
   const int gif_height = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
   double fps = cap.get(cv::CAP_PROP_FPS);
-  // Ensure FPS is within reasonable bounds to prevent division by zero and
-  // timing issues
   if (fps <= 0 || fps > 1000) {
     fps = 10.0; // Default GIF speed
   }
@@ -797,22 +793,19 @@ bool Sakura::renderVideoFromFile(std::string_view videoPath,
 
     const auto frame_start = std::chrono::steady_clock::now();
 
-    // Resize frame for COVER mode
     cv::resize(frame, resized_frame, cv::Size(target_width, target_height), 0,
                0, cv::INTER_NEAREST);
 
-    // Use ultra-fast renderer (no SIXEL)
+    // only using ascii blocks for now
     const std::string frame_output = renderVideoUltraFast(resized_frame);
     if (frame_output.empty()) {
       std::cerr << "Frame output is empty!" << std::endl;
       continue;
     }
 
-    // Display frame
     std::cout << "\033[H" << frame_output << std::flush;
     frames_displayed++;
 
-    // Frame timing
     const auto target_time = start_time + (frames_displayed * frame_duration);
     const auto now = std::chrono::steady_clock::now();
 
@@ -830,7 +823,7 @@ bool Sakura::renderVideoFromFile(std::string_view videoPath,
       frames_displayed > 0 ? 100.0 * frames_dropped / frames_displayed : 0.0;
   std::cout << "\nPerformance: Displayed=" << frames_displayed
             << " Dropped=" << frames_dropped << " (" << std::fixed
-            << std::setprecision(1) << drop_rate << "%) ULTRA-FAST MODE"
+            << std::setprecision(1) << drop_rate << "%)"
             << std::endl;
 
   return true;
