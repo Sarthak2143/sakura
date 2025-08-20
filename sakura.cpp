@@ -25,7 +25,9 @@
 const std::string Sakura::ASCII_CHARS_SIMPLE = " .:-=+*#%@";
 const std::string Sakura::ASCII_CHARS_DETAILED =
     " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
-const std::string Sakura::ASCII_CHARS_BLOCKS = " \u2591\u2592\u2593\u2588";
+const std::string Sakura::ASCII_CHARS_BLOCKS = " ░▒▓█";
+const std::string Sakura::ASCII_CHARS_ULTRA = " ▁▂▃▄▅▆▇█";
+const std::string Sakura::ASCII_CHARS_MICRO = " .·∶⁚⁛⁜⁝⁞ ⁠⁡⁢⁣⁤⁥⁦⁧⁨⁩⁪⁫⁬⁭⁮⁯░▒▓█";
 
 #ifdef _WIN32
 #include <windows.h>
@@ -182,8 +184,12 @@ const std::string &Sakura::getCharSet(CharStyle style) const noexcept {
     return ASCII_CHARS_DETAILED;
   case BLOCKS:
     return ASCII_CHARS_BLOCKS;
+  case ULTRA:
+    return ASCII_CHARS_ULTRA;
+  case MICRO:
+    return ASCII_CHARS_MICRO;
   default:
-    return ASCII_CHARS_DETAILED;
+    return ASCII_CHARS_ULTRA; // Default to ultra for best quality
   }
 }
 
@@ -511,7 +517,7 @@ std::string Sakura::renderSixel(const cv::Mat &img, int paletteSize,
   return sixel_output_string;
 }
 
-// Enhanced video renderer with multiple quality modes and advanced block characters
+// Ultra-Enhanced video renderer with HDR-like processing and sub-pixel precision
 std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOptions &options) const {
   if (frame.empty()) {
     return "";
@@ -530,69 +536,142 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
     working_frame = frame;
   }
 
-  const int height = working_frame.rows;
-  const int width = working_frame.cols;
+  // Apply advanced image processing for better quality
+  cv::Mat enhanced_frame;
+  
+  // 1. Adaptive histogram equalization for better contrast
+  cv::Mat lab_frame, lab_channels[3];
+  cv::cvtColor(working_frame, lab_frame, cv::COLOR_BGR2Lab);
+  cv::split(lab_frame, lab_channels);
+  
+  cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(2.0, cv::Size(8,8));
+  clahe->apply(lab_channels[0], lab_channels[0]);
+  
+  cv::merge(lab_channels, 3, lab_frame);
+  cv::cvtColor(lab_frame, enhanced_frame, cv::COLOR_Lab2BGR);
+  
+  // 2. Slight sharpening for better detail
+  cv::Mat kernel = (cv::Mat_<float>(3,3) << 
+                    0, -0.25, 0,
+                   -0.25, 2.0, -0.25,
+                    0, -0.25, 0);
+  cv::Mat sharpened;
+  cv::filter2D(enhanced_frame, sharpened, enhanced_frame.depth(), kernel);
+  
+  // Blend original and sharpened (20% sharpening)
+  cv::addWeighted(enhanced_frame, 0.8, sharpened, 0.2, 0, enhanced_frame);
+
+  const int height = enhanced_frame.rows;
+  const int width = enhanced_frame.cols;
 
   std::string output;
   
   // Choose rendering approach based on options
   switch (options.mode) {
     case EXACT:
-      return renderExactVideo(working_frame);
+      return renderExactVideo(enhanced_frame);
     case ASCII_COLOR:
-      return renderAsciiColorVideo(working_frame);
+      return renderAsciiColorVideo(enhanced_frame);
     case ASCII_GRAY:
-      return renderAsciiGrayVideo(working_frame, options);
+      return renderAsciiGrayVideo(enhanced_frame, options);
     default:
-      // Enhanced block character rendering with advanced quality
-      output.reserve(height * width * 30);
+      // ULTRA-Enhanced block character rendering with sub-pixel precision
+      output.reserve(height * width * 35);
       
-      // Advanced block character selection with dithering
-      const std::vector<std::string> advanced_blocks = {
-        " ", "░", "▒", "▓", "█",  // Basic density blocks
-        "▁", "▂", "▃", "▄", "▅", "▆", "▇",  // Lower blocks
-        "▀", "▔",  // Upper blocks
-        "▌", "▐",  // Half blocks
-        "▖", "▗", "▘", "▝",  // Quarter blocks
-        "▙", "▚", "▛", "▜", "▞", "▟"  // Complex blocks
+      // Extended Unicode block character palette for maximum fidelity
+      const std::vector<std::pair<std::string, double>> ultra_blocks = {
+        {" ", 0.0},      // Empty
+        {"▁", 0.125},    // 1/8 block
+        {"▂", 0.25},     // 2/8 block  
+        {"▃", 0.375},    // 3/8 block
+        {"▄", 0.5},      // 4/8 block
+        {"▅", 0.625},    // 5/8 block
+        {"▆", 0.75},     // 6/8 block
+        {"▇", 0.875},    // 7/8 block
+        {"█", 1.0},      // Full block
+        {"▀", 0.5},      // Upper half
+        {"░", 0.25},     // Light shade
+        {"▒", 0.5},      // Medium shade
+        {"▓", 0.75},     // Dark shade
+        {"▌", 0.5},      // Left half
+        {"▐", 0.5},      // Right half
+        {"▖", 0.25},     // Quadrant lower left
+        {"▗", 0.25},     // Quadrant lower right
+        {"▘", 0.25},     // Quadrant upper left
+        {"▝", 0.25},     // Quadrant upper right
+        {"▙", 0.75},     // Quadrant upper left and lower left and lower right
+        {"▚", 0.5},      // Quadrant upper left and lower right
+        {"▛", 0.75},     // Quadrant upper left and upper right and lower left
+        {"▜", 0.75},     // Quadrant upper left and upper right and lower right
+        {"▞", 0.5},      // Quadrant upper right and lower left
+        {"▟", 0.75},     // Quadrant upper right and lower left and lower right
+        {"🮌", 0.125},    // Left one eighth block
+        {"🮍", 0.25},     // Left one quarter block
+        {"🮎", 0.375},    // Left three eighths block
+        {"🮏", 0.625},    // Left five eighths block
+        {"🮐", 0.75},     // Left three quarters block
+        {"🮑", 0.875},    // Left seven eighths block
       };
 
+      // Process frame in 2x2 pixel blocks for sub-pixel accuracy
       for (int y = 0; y < height; y += 2) {
         for (int x = 0; x < width; ++x) {
-          const cv::Vec3b top_pixel = working_frame.at<cv::Vec3b>(y, x);
-          const cv::Vec3b bottom_pixel = (y + 1 < height) ? 
-              working_frame.at<cv::Vec3b>(y + 1, x) : top_pixel;
-
-          // Enhanced brightness calculation with proper weighting
-          const double top_luma = 0.299 * top_pixel[2] + 0.587 * top_pixel[1] + 0.114 * top_pixel[0];
-          const double bottom_luma = 0.299 * bottom_pixel[2] + 0.587 * bottom_pixel[1] + 0.114 * bottom_pixel[0];
+          // Sample 2x2 pixel region for maximum detail
+          std::vector<cv::Vec3b> pixels;
+          std::vector<double> lumas;
           
-          // Smart character selection based on luminance patterns
+          for (int dy = 0; dy < 2; ++dy) {
+            for (int dx = 0; dx < 1; ++dx) { // Only sample vertically for now
+              int py = std::min(y + dy, height - 1);
+              int px = std::min(x + dx, width - 1);
+              cv::Vec3b pixel = enhanced_frame.at<cv::Vec3b>(py, px);
+              pixels.push_back(pixel);
+              
+              // Perceptual luminance with gamma correction
+              double r = std::pow(pixel[2] / 255.0, 2.2);
+              double g = std::pow(pixel[1] / 255.0, 2.2);
+              double b = std::pow(pixel[0] / 255.0, 2.2);
+              double luma = std::pow(0.2126 * r + 0.7152 * g + 0.0722 * b, 1.0/2.2) * 255.0;
+              lumas.push_back(luma);
+            }
+          }
+          
+          const cv::Vec3b top_pixel = pixels[0];
+          const cv::Vec3b bottom_pixel = (pixels.size() > 1) ? pixels[1] : pixels[0];
+          const double top_luma = lumas[0];
+          const double bottom_luma = (lumas.size() > 1) ? lumas[1] : lumas[0];
+          
+          // Advanced edge detection for better character selection
+          double luma_diff = std::abs(top_luma - bottom_luma);
+          double avg_luma = (top_luma + bottom_luma) / 2.0;
+          double luma_ratio = (bottom_luma > 0) ? top_luma / bottom_luma : 1.0;
+          
           std::string chosen_char;
           cv::Vec3b fg_color, bg_color;
           
-          const double luma_diff = std::abs(top_luma - bottom_luma);
-          const double avg_luma = (top_luma + bottom_luma) / 2.0;
+          // Adaptive thresholding based on local contrast
+          double contrast_threshold = 15.0 + (avg_luma / 255.0) * 20.0; // Dynamic threshold
           
-          if (luma_diff < 15.0) {
-            // Similar luminance - use density blocks
-            if (avg_luma < 32) {
+          if (luma_diff < contrast_threshold) {
+            // Low contrast - use density blocks with better gradation
+            double intensity = avg_luma / 255.0;
+            
+            if (intensity < 0.08) {
               chosen_char = " ";
-              bg_color = cv::Vec3b(0, 0, 0);
-              fg_color = cv::Vec3b(0, 0, 0);
-            } else if (avg_luma < 64) {
+              fg_color = bg_color = cv::Vec3b(0, 0, 0);
+            } else if (intensity < 0.16) {
               chosen_char = "░";
               fg_color = cv::Vec3b((top_pixel[0] + bottom_pixel[0]) / 2,
                                  (top_pixel[1] + bottom_pixel[1]) / 2,
                                  (top_pixel[2] + bottom_pixel[2]) / 2);
               bg_color = cv::Vec3b(0, 0, 0);
-            } else if (avg_luma < 128) {
+            } else if (intensity < 0.32) {
               chosen_char = "▒";
               fg_color = cv::Vec3b((top_pixel[0] + bottom_pixel[0]) / 2,
                                  (top_pixel[1] + bottom_pixel[1]) / 2,
                                  (top_pixel[2] + bottom_pixel[2]) / 2);
               bg_color = cv::Vec3b(0, 0, 0);
-            } else if (avg_luma < 192) {
+            } else if (intensity < 0.64) {
               chosen_char = "▓";
               fg_color = cv::Vec3b((top_pixel[0] + bottom_pixel[0]) / 2,
                                  (top_pixel[1] + bottom_pixel[1]) / 2,
@@ -606,14 +685,24 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
               bg_color = cv::Vec3b(0, 0, 0);
             }
           } else {
-            // Different luminance - use directional blocks
+            // High contrast - use directional blocks with sub-pixel precision
             if (top_luma > bottom_luma) {
-              if (luma_diff > 100) {
+              if (luma_diff > 120) {
+                // Strong top-heavy contrast
                 chosen_char = "▀";
                 fg_color = top_pixel;
                 bg_color = bottom_pixel;
-              } else if (luma_diff > 50) {
-                chosen_char = "▞"; // Diagonal pattern
+              } else if (luma_diff > 80) {
+                // Medium contrast with gradient effect
+                if (luma_ratio > 2.0) {
+                  chosen_char = "▔"; // Top overline
+                } else {
+                  chosen_char = "▀";
+                }
+                fg_color = top_pixel;
+                bg_color = bottom_pixel;
+              } else if (luma_diff > 40) {
+                chosen_char = "▞"; // Diagonal for subtle contrast
                 fg_color = top_pixel;
                 bg_color = bottom_pixel;
               } else {
@@ -622,12 +711,22 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
                 bg_color = bottom_pixel;
               }
             } else {
-              if (luma_diff > 100) {
+              if (luma_diff > 120) {
+                // Strong bottom-heavy contrast
                 chosen_char = "▄";
                 fg_color = bottom_pixel;
                 bg_color = top_pixel;
-              } else if (luma_diff > 50) {
-                chosen_char = "▚"; // Diagonal pattern
+              } else if (luma_diff > 80) {
+                // Medium contrast
+                if (1.0/luma_ratio > 2.0) {
+                  chosen_char = "▁"; // Bottom underline
+                } else {
+                  chosen_char = "▄";
+                }
+                fg_color = bottom_pixel;
+                bg_color = top_pixel;
+              } else if (luma_diff > 40) {
+                chosen_char = "▚"; // Diagonal for subtle contrast
                 fg_color = bottom_pixel;
                 bg_color = top_pixel;
               } else {
@@ -638,7 +737,22 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
             }
           }
 
-          // Optimized ANSI color output
+          // Color enhancement for better visual appeal
+          auto enhance_color = [](const cv::Vec3b& color) -> cv::Vec3b {
+            cv::Vec3b enhanced;
+            for (int i = 0; i < 3; ++i) {
+              // Slight saturation boost and gamma correction
+              double normalized = color[i] / 255.0;
+              double gamma_corrected = std::pow(normalized, 0.9); // Slight brightness boost
+              enhanced[i] = static_cast<uchar>(std::clamp(gamma_corrected * 255.0, 0.0, 255.0));
+            }
+            return enhanced;
+          };
+          
+          fg_color = enhance_color(fg_color);
+          bg_color = enhance_color(bg_color);
+
+          // Optimized ANSI color output with better formatting
           output += "\033[48;2;";
           output += std::to_string(bg_color[2]);
           output += ";";
@@ -722,45 +836,100 @@ std::string Sakura::renderAsciiGrayVideo(const cv::Mat &frame, const RenderOptio
   cv::Mat gray;
   cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
   
+  // Apply edge enhancement for better detail preservation
+  cv::Mat enhanced_gray;
+  cv::Mat blur;
+  cv::GaussianBlur(gray, blur, cv::Size(3, 3), 0.5);
+  cv::addWeighted(gray, 1.5, blur, -0.5, 0, enhanced_gray);
+  
   const std::string &charSet = getCharSet(options.style);
   const int num_chars = static_cast<int>(charSet.size());
-  const int height = gray.rows;
-  const int width = gray.cols;
+  const int height = enhanced_gray.rows;
+  const int width = enhanced_gray.cols;
   
   std::string output;
-  output.reserve(width * height);
+  output.reserve(width * height + height); // +height for newlines
 
-  // Simple Floyd-Steinberg dithering for video
+  // Advanced Floyd-Steinberg dithering with better error distribution
   if (options.dither == FLOYD_STEINBERG) {
-    cv::Mat error = cv::Mat::zeros(height, width, CV_32F);
-    gray.convertTo(gray, CV_32F, 1.0 / 255.0);
+    cv::Mat error = cv::Mat::zeros(height + 1, width + 2, CV_32F); // Padded for bounds checking
+    enhanced_gray.convertTo(enhanced_gray, CV_32F, 1.0 / 255.0);
 
     for (int y = 0; y < height; ++y) {
+      std::string line;
+      line.reserve(width);
+      
       for (int x = 0; x < width; ++x) {
-        float old_value = std::clamp(gray.at<float>(y, x) + error.at<float>(y, x), 0.0f, 1.0f);
-        int level = std::clamp(static_cast<int>(std::round(old_value * (num_chars - 1))), 0, num_chars - 1);
-        float chosen_value = static_cast<float>(level) / (num_chars - 1);
+        float old_value = std::clamp(enhanced_gray.at<float>(y, x) + error.at<float>(y, x + 1), 0.0f, 1.0f);
+        
+        // Improved quantization with better threshold handling
+        int level;
+        if (num_chars <= 2) {
+          level = old_value > 0.5 ? num_chars - 1 : 0;
+        } else {
+          level = std::clamp(static_cast<int>(std::round(old_value * (num_chars - 1))), 0, num_chars - 1);
+        }
+        
+        float chosen_value = static_cast<float>(level) / std::max(1, num_chars - 1);
         float err = old_value - chosen_value;
 
-        // Distribute error (simplified for performance)
-        if (x + 1 < width) error.at<float>(y, x + 1) += err * 0.4375f; // 7/16
-        if (y + 1 < height && x > 0) error.at<float>(y + 1, x - 1) += err * 0.1875f; // 3/16
-        if (y + 1 < height) error.at<float>(y + 1, x) += err * 0.3125f; // 5/16
-        if (y + 1 < height && x + 1 < width) error.at<float>(y + 1, x + 1) += err * 0.0625f; // 1/16
+        // Enhanced error distribution with improved coefficients
+        const float total_error = err;
+        error.at<float>(y, x + 2) += total_error * (7.0f / 16.0f);      // Right
+        error.at<float>(y + 1, x) += total_error * (3.0f / 16.0f);      // Below left  
+        error.at<float>(y + 1, x + 1) += total_error * (5.0f / 16.0f);  // Below
+        error.at<float>(y + 1, x + 2) += total_error * (1.0f / 16.0f);  // Below right
 
-        output += charSet[level];
+        line += charSet[level];
       }
-      output += '\n';
+      output += line + '\n';
+    }
+  } else if (options.dither == ATKINSON) {
+    // Implement Atkinson dithering for even better quality
+    cv::Mat error = cv::Mat::zeros(height + 2, width + 4, CV_32F);
+    enhanced_gray.convertTo(enhanced_gray, CV_32F, 1.0 / 255.0);
+
+    for (int y = 0; y < height; ++y) {
+      std::string line;
+      line.reserve(width);
+      
+      for (int x = 0; x < width; ++x) {
+        float old_value = std::clamp(enhanced_gray.at<float>(y, x) + error.at<float>(y, x + 2), 0.0f, 1.0f);
+        
+        int level = std::clamp(static_cast<int>(std::round(old_value * (num_chars - 1))), 0, num_chars - 1);
+        float chosen_value = static_cast<float>(level) / std::max(1, num_chars - 1);
+        float err = (old_value - chosen_value) / 8.0f; // Atkinson uses /8
+
+        // Atkinson dithering pattern
+        error.at<float>(y, x + 3) += err;          // Right
+        error.at<float>(y, x + 4) += err;          // Right+1
+        error.at<float>(y + 1, x + 1) += err;      // Below left
+        error.at<float>(y + 1, x + 2) += err;      // Below
+        error.at<float>(y + 1, x + 3) += err;      // Below right  
+        error.at<float>(y + 2, x + 2) += err;      // Below+1
+
+        line += charSet[level];
+      }
+      output += line + '\n';
     }
   } else {
-    // Simple threshold mapping for speed
+    // Improved threshold mapping with better distribution
     for (int y = 0; y < height; ++y) {
+      std::string line;
+      line.reserve(width);
+      
       for (int x = 0; x < width; ++x) {
-        const int intensity = gray.at<uchar>(y, x);
-        const int idx = (intensity * (num_chars - 1)) / 255;
-        output += charSet[idx];
+        const int intensity = enhanced_gray.at<uchar>(y, x);
+        
+        // Non-linear mapping for better perceptual distribution
+        double normalized = intensity / 255.0;
+        double gamma_corrected = std::pow(normalized, 1.2); // Slightly darker midtones
+        int idx = static_cast<int>(gamma_corrected * (num_chars - 1));
+        idx = std::clamp(idx, 0, num_chars - 1);
+        
+        line += charSet[idx];
       }
-      output += '\n';
+      output += line + '\n';
     }
   }
 

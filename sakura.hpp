@@ -8,9 +8,9 @@
 
 class Sakura {
 public:
-  enum CharStyle { SIMPLE, DETAILED, BLOCKS };
+  enum CharStyle { SIMPLE, DETAILED, BLOCKS, ULTRA, MICRO };
   enum RenderMode { EXACT, ASCII_COLOR, ASCII_GRAY, SIXEL };
-  enum DitherMode { NONE, FLOYD_STEINBERG };
+  enum DitherMode { NONE, FLOYD_STEINBERG, ATKINSON };
   enum FitMode { STRETCH, COVER, CONTAIN };
 
   enum SixelQuality { LOW, HIGH };
@@ -68,6 +68,8 @@ private:
   static const std::string ASCII_CHARS_SIMPLE;
   static const std::string ASCII_CHARS_DETAILED;
   static const std::string ASCII_CHARS_BLOCKS;
+  static const std::string ASCII_CHARS_ULTRA;
+  static const std::string ASCII_CHARS_MICRO;
 
   const std::string &getCharSet(CharStyle style) const noexcept;
   static std::pair<int, int> getTerminalSize();
