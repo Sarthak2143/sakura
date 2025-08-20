@@ -511,140 +511,6 @@ std::string Sakura::renderSixel(const cv::Mat &img, int paletteSize,
   return sixel_output_string;
 }
 
-// Ultra-fast video renderer using enhanced ASCII blocks with improved quality
-std::string Sakura::renderVideoUltraFast(const cv::Mat &frame) const {
-  if (frame.empty() || frame.channels() != 3) {
-    return "";
-  }
-
-  const int height = frame.rows;
-  const int width = frame.cols;
-
-  std::string output;
-  output.reserve(height * width * 30); // Increased for better block characters
-
-  // Enhanced Unicode block characters for higher quality rendering
-  const std::vector<std::string> block_chars = {
-    " ",      // 0/8 filled
-    "▁",      // 1/8 filled (lower)
-    "▂",      // 2/8 filled (lower)
-    "▃",      // 3/8 filled (lower)
-    "▄",      // 4/8 filled (lower half)
-    "▅",      // 5/8 filled (lower)
-    "▆",      // 6/8 filled (lower)
-    "▇",      // 7/8 filled (lower)
-    "█",      // 8/8 filled (full)
-    "▀",      // upper half
-    "▌",      // left half
-    "▐",      // right half
-    "▖",      // lower left quarter
-    "▗",      // lower right quarter
-    "▘",      // upper left quarter
-    "▙",      // left + lower right
-    "▚",      // upper left + lower right
-    "▛",      // upper + lower left
-    "▜",      // upper + lower right
-    "▝",      // upper right quarter
-    "▞",      // upper right + lower left
-    "▟"       // left + upper right
-  };
-
-  // Process 2 rows at a time for better density
-  for (int y = 0; y < height; y += 2) {
-    for (int x = 0; x < width; ++x) {
-      const cv::Vec3b top_pixel = frame.at<cv::Vec3b>(y, x);
-      const cv::Vec3b bottom_pixel =
-          (y + 1 < height) ? frame.at<cv::Vec3b>(y + 1, x) : top_pixel;
-
-      // Calculate brightness for better character selection
-      const int top_brightness = (top_pixel[0] + top_pixel[1] + top_pixel[2]) / 3;
-      const int bottom_brightness = (bottom_pixel[0] + bottom_pixel[1] + bottom_pixel[2]) / 3;
-      
-      // Enhanced character selection based on brightness patterns
-      std::string chosen_char;
-      cv::Vec3b fg_color, bg_color;
-      
-      if (std::abs(top_brightness - bottom_brightness) < 20) {
-        // Similar brightness - use solid block with average color
-        const int avg_brightness = (top_brightness + bottom_brightness) / 2;
-        if (avg_brightness < 32) {
-          chosen_char = " ";
-          bg_color = cv::Vec3b(0, 0, 0);
-          fg_color = cv::Vec3b(0, 0, 0);
-        } else if (avg_brightness < 96) {
-          chosen_char = "▒"; // Medium shade
-          fg_color = cv::Vec3b(
-            (top_pixel[0] + bottom_pixel[0]) / 2,
-            (top_pixel[1] + bottom_pixel[1]) / 2,
-            (top_pixel[2] + bottom_pixel[2]) / 2
-          );
-          bg_color = cv::Vec3b(0, 0, 0);
-        } else if (avg_brightness < 160) {
-          chosen_char = "▓"; // Dark shade
-          fg_color = cv::Vec3b(
-            (top_pixel[0] + bottom_pixel[0]) / 2,
-            (top_pixel[1] + bottom_pixel[1]) / 2,
-            (top_pixel[2] + bottom_pixel[2]) / 2
-          );
-          bg_color = cv::Vec3b(0, 0, 0);
-        } else {
-          chosen_char = "█"; // Full block
-          fg_color = cv::Vec3b(
-            (top_pixel[0] + bottom_pixel[0]) / 2,
-            (top_pixel[1] + bottom_pixel[1]) / 2,
-            (top_pixel[2] + bottom_pixel[2]) / 2
-          );
-          bg_color = cv::Vec3b(0, 0, 0);
-        }
-      } else {
-        // Different brightness - use half blocks or quarters
-        if (top_brightness > bottom_brightness) {
-          // Top is brighter
-          if (top_brightness - bottom_brightness > 80) {
-            chosen_char = "▀"; // Upper half block
-            fg_color = top_pixel;
-            bg_color = bottom_pixel;
-          } else {
-            chosen_char = "▄"; // Lower half block  
-            fg_color = bottom_pixel;
-            bg_color = top_pixel;
-          }
-        } else {
-          // Bottom is brighter
-          if (bottom_brightness - top_brightness > 80) {
-            chosen_char = "▄"; // Lower half block
-            fg_color = bottom_pixel;
-            bg_color = top_pixel;
-          } else {
-            chosen_char = "▀"; // Upper half block
-            fg_color = top_pixel;
-            bg_color = bottom_pixel;
-          }
-        }
-      }
-
-      // Build optimized color string
-      output += "\033[48;2;";
-      output += std::to_string(bg_color[2]);
-      output += ";";
-      output += std::to_string(bg_color[1]);
-      output += ";";
-      output += std::to_string(bg_color[0]);
-      output += "m\033[38;2;";
-      output += std::to_string(fg_color[2]);
-      output += ";";
-      output += std::to_string(fg_color[1]);
-      output += ";";
-      output += std::to_string(fg_color[0]);
-      output += "m";
-      output += chosen_char;
-    }
-    output += "\033[0m\n"; // Reset colors and newline
-  }
-
-  return output;
-}
-
 // Enhanced video renderer with multiple quality modes and advanced block characters
 std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOptions &options) const {
   if (frame.empty()) {
@@ -677,9 +543,8 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
       return renderAsciiColorVideo(working_frame);
     case ASCII_GRAY:
       return renderAsciiGrayVideo(working_frame, options);
-    case ULTRA_FAST:
     default:
-      // Fall back to ultra-fast with enhanced quality
+      // Enhanced block character rendering with advanced quality
       output.reserve(height * width * 30);
       
       // Advanced block character selection with dithering
@@ -1112,12 +977,7 @@ bool Sakura::renderVideoFromFile(std::string_view videoPath,
   if (fps <= 0)
     fps = 30.0;
 
-  std::cout << "Video: " << fps << " FPS, " << frame_count << " frames";
-  if (options.mode == ULTRA_FAST) {
-    std::cout << " (ULTRA-FAST MODE)" << std::endl;
-  } else {
-    std::cout << " (ENHANCED QUALITY MODE)" << std::endl;
-  }
+  std::cout << "Video: " << fps << " FPS, " << frame_count << " frames (ENHANCED QUALITY)" << std::endl;
   std::cout << "Target dimensions: " << options.width << "x" << options.height
             << std::endl;
 
@@ -1150,14 +1010,8 @@ bool Sakura::renderVideoFromFile(std::string_view videoPath,
     cv::resize(frame, resized_frame, cv::Size(target_width, target_height), 0,
                0, cv::INTER_NEAREST);
 
-    // Choose rendering method based on options
-    std::string frame_output;
-    if (options.mode == ULTRA_FAST) {
-      frame_output = renderVideoUltraFast(resized_frame);
-    } else {
-      // Use enhanced renderer for better quality
-      frame_output = renderVideoEnhanced(resized_frame, options);
-    }
+    // Use enhanced renderer for high quality video rendering
+    const std::string frame_output = renderVideoEnhanced(resized_frame, options);
     
     if (frame_output.empty()) {
       std::cerr << "Frame output is empty!" << std::endl;

@@ -9,7 +9,7 @@
 class Sakura {
 public:
   enum CharStyle { SIMPLE, DETAILED, BLOCKS };
-  enum RenderMode { EXACT, ASCII_COLOR, ASCII_GRAY, SIXEL, ULTRA_FAST };
+  enum RenderMode { EXACT, ASCII_COLOR, ASCII_GRAY, SIXEL };
   enum DitherMode { NONE, FLOYD_STEINBERG };
   enum FitMode { STRETCH, COVER, CONTAIN };
 
@@ -78,8 +78,7 @@ private:
                                                 std::string_view charSet,
                                                 DitherMode dither) const;
   std::string renderSixel(const cv::Mat &img, int paletteSize = 16, int output_width = 0, int output_height = 0, SixelQuality quality = HIGH) const;
-  std::string renderVideoUltraFast(const cv::Mat &frame) const; // Enhanced ultra-fast method
-  std::string renderVideoEnhanced(const cv::Mat &frame, const RenderOptions &options) const; // New enhanced method
+  std::string renderVideoEnhanced(const cv::Mat &frame, const RenderOptions &options) const; // Enhanced video method
   std::string renderExactVideo(const cv::Mat &frame) const; // Helper for exact video rendering
   std::string renderAsciiColorVideo(const cv::Mat &frame) const; // Helper for color ASCII video
   std::string renderAsciiGrayVideo(const cv::Mat &frame, const RenderOptions &options) const; // Helper for grayscale ASCII video

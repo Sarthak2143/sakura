@@ -108,7 +108,7 @@ bool process_video(std::string url) {
   return sakura.renderVideoFromUrl(url, options);
 }
 
-bool process_local_video_enhanced(std::string path) {
+bool process_local_video(std::string path) {
   Sakura sakura;
   bool stat = false;
   auto [termCols, termRows] = getTerminalCharSize(); // Use character dimensions
@@ -136,34 +136,6 @@ bool process_local_video_enhanced(std::string path) {
   return stat;
 }
 
-bool process_local_video(std::string path) {
-  Sakura sakura;
-  bool stat = false;
-  auto [termCols, termRows] = getTerminalCharSize(); // Use character dimensions
-
-  // Ultra-fast settings for maximum performance
-  Sakura::RenderOptions options;
-  options.mode = Sakura::ULTRA_FAST;
-  options.dither = Sakura::NONE;
-  options.terminalAspectRatio = 1.0;
-  options.width = termCols;
-  options.height = termRows;
-  options.queueSize = 1;
-  options.prebufferFrames = 1;
-  options.staticPalette = true;
-  options.fastResize = true;
-  options.targetFps = 0.0; // Follow source FPS
-  options.adaptivePalette = false;
-  options.adaptiveScale = false;
-  options.hwAccelPipe = false;
-  options.tileUpdates = false;
-  options.fit = Sakura::FitMode::COVER; // Fill terminal
-  options.sixelQuality = Sakura::SixelQuality::HIGH;
-
-  stat = sakura.renderVideoFromFile(path, options);
-  return stat;
-}
-
 int main(int argc, char **argv) {
   // Parse command line arguments
   static struct option long_options[] = {
@@ -172,7 +144,6 @@ int main(int argc, char **argv) {
       {"gif", required_argument, 0, 'g'},
       {"video", required_argument, 0, 'v'},
       {"local-video", required_argument, 0, 'l'},
-      {"enhanced-video", required_argument, 0, 'e'},
       {0, 0, 0, 0}};
 
   std::string video_path, image_path;
@@ -183,7 +154,7 @@ int main(int argc, char **argv) {
   bool stat = false;
 
   if (argc > 1) {
-    while ((opt = getopt_long(argc, argv, "hv:i:g:l:e:", long_options,
+    while ((opt = getopt_long(argc, argv, "hv:i:g:l:", long_options,
                               &option_index)) != -1) {
       switch (opt) {
       case 'h':
@@ -193,8 +164,7 @@ int main(int argc, char **argv) {
                   << "  -i, --image <path>         Process image file\n"
                   << "  -g, --gif <path>           Process GIF file\n"
                   << "  -v, --video <path>         Process video file\n"
-                  << "  -l, --local-video <path>   Process local video file (ULTRA-FAST)\n"
-                  << "  -e, --enhanced-video <path> Process local video file (ENHANCED QUALITY)\n";
+                  << "  -l, --local-video <path>   Process local video file (ENHANCED QUALITY)\n";
         return 0;
 
       case 'i':
@@ -211,10 +181,6 @@ int main(int argc, char **argv) {
 
       case 'l':
         stat = process_local_video(optarg);
-        break;
-
-      case 'e':
-        stat = process_local_video_enhanced(optarg);
         break;
 
       case '?':
@@ -246,10 +212,8 @@ int main(int argc, char **argv) {
   auto [termPixW, termPixH] = getTerminalPixelSize();
 
   std::cout << "Sakura Video Player with SIXEL\n";
-  std::cout << "1. Image\n2. GIF\n3. Video (URL)\n4. Video (File - Ultra Fast)\n5. Video (File - Enhanced Quality)\n";
-  std::cout << "Choose option (1-5): ";
-
-  int choice;
+  std::cout << "1. Image\n2. GIF\n3. Video (URL)\n4. Video (File)\n";
+  std::cout << "Choose option (1-4): ";  int choice;
   std::cin >> choice;
 
   switch (choice) {
@@ -277,17 +241,9 @@ int main(int argc, char **argv) {
   case 4: {
     std::cout << "Enter video file path: ";
     std::cin >> localVideoPath;
-    std::cout << "Rendering video from file (Ultra Fast mode with audio)...\n";
-
-    stat = process_local_video(localVideoPath);
-    break;
-  }
-  case 5: {
-    std::cout << "Enter video file path: ";
-    std::cin >> localVideoPath;
     std::cout << "Rendering video from file (Enhanced Quality mode with audio)...\n";
 
-    stat = process_local_video_enhanced(localVideoPath);
+    stat = process_local_video(localVideoPath);
     break;
   }
   default: {
