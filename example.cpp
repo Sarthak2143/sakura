@@ -33,7 +33,6 @@ std::pair<int, int> calculateBestFitSize(int contentWidth, int contentHeight,
 
   int outw, outh;
   if (contentAspect > termAspect) {
-    // Content is wider - fit to terminal width
     outw = termWidth;
     outh = static_cast<int>(termWidth / contentAspect);
   } else {
@@ -113,7 +112,6 @@ bool process_local_video(std::string path) {
   bool stat = false;
   auto [termCols, termRows] = getTerminalCharSize(); // Use character dimensions
 
-  // Enhanced quality settings with improved ASCII blocks
   Sakura::RenderOptions options;
   options.mode = Sakura::EXACT; // Use EXACT mode for enhanced quality
   options.dither = Sakura::FLOYD_STEINBERG;
@@ -164,7 +162,7 @@ int main(int argc, char **argv) {
                   << "  -i, --image <path>         Process image file\n"
                   << "  -g, --gif <path>           Process GIF file\n"
                   << "  -v, --video <path>         Process video file\n"
-                  << "  -l, --local-video <path>   Process local video file (ENHANCED QUALITY)\n";
+                  << "  -l, --local-video <path>   Process local video file\n";
         return 0;
 
       case 'i':

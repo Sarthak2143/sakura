@@ -189,7 +189,7 @@ const std::string &Sakura::getCharSet(CharStyle style) const noexcept {
   case MICRO:
     return ASCII_CHARS_MICRO;
   default:
-    return ASCII_CHARS_ULTRA; // Default to ultra for best quality
+    return ASCII_CHARS_ULTRA;
   }
 }
 
@@ -444,7 +444,6 @@ std::string Sakura::renderSixel(const cv::Mat &img, int paletteSize,
     return ""; // Unsupported format
   }
 
-  // Validate converted image
   if (rgb_img.empty() || rgb_img.data == nullptr) {
     return "";
   }
@@ -517,7 +516,6 @@ std::string Sakura::renderSixel(const cv::Mat &img, int paletteSize,
   return sixel_output_string;
 }
 
-// Ultra-Enhanced video renderer with HDR-like processing and sub-pixel precision
 std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOptions &options) const {
   if (frame.empty()) {
     return "";
@@ -536,37 +534,67 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
     working_frame = frame;
   }
 
-  // Apply advanced image processing for better quality
   cv::Mat enhanced_frame;
   
-  // 1. Adaptive histogram equalization for better contrast
   cv::Mat lab_frame, lab_channels[3];
   cv::cvtColor(working_frame, lab_frame, cv::COLOR_BGR2Lab);
   cv::split(lab_frame, lab_channels);
   
-  cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(2.0, cv::Size(8,8));
+  cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(1.2, cv::Size(8,8)); // Reduced from 1.8
   clahe->apply(lab_channels[0], lab_channels[0]);
   
   cv::merge(lab_channels, 3, lab_frame);
   cv::cvtColor(lab_frame, enhanced_frame, cv::COLOR_Lab2BGR);
   
-  // 2. Slight sharpening for better detail
-  cv::Mat kernel = (cv::Mat_<float>(3,3) << 
-                    0, -0.25, 0,
-                   -0.25, 2.0, -0.25,
-                    0, -0.25, 0);
-  cv::Mat sharpened;
-  cv::filter2D(enhanced_frame, sharpened, enhanced_frame.depth(), kernel);
+  cv::Mat gray_frame;
+  cv::cvtColor(enhanced_frame, gray_frame, cv::COLOR_BGR2GRAY);
   
-  // Blend original and sharpened (20% sharpening)
-  cv::addWeighted(enhanced_frame, 0.8, sharpened, 0.2, 0, enhanced_frame);
+  // detect edges using Sobel operators for motion areas
+  cv::Mat grad_x, grad_y, gradient;
+  cv::Sobel(gray_frame, grad_x, CV_32F, 1, 0, 3);
+  cv::Sobel(gray_frame, grad_y, CV_32F, 0, 1, 3);
+  cv::magnitude(grad_x, grad_y, gradient);
+  
+  cv::Mat edge_mask;
+  cv::threshold(gradient, edge_mask, 30, 1.0, cv::THRESH_BINARY);
+  edge_mask.convertTo(edge_mask, CV_32F, 1.0/255.0);
+  
+  cv::Mat adaptive_kernel = (cv::Mat_<float>(3,3) << 
+                            0, -0.15, 0,
+                           -0.15, 1.6, -0.15,
+                            0, -0.15, 0);
+  
+  cv::Mat gentle_kernel = (cv::Mat_<float>(3,3) << 
+                          0, -0.05, 0,
+                         -0.05, 1.2, -0.05,
+                          0, -0.05, 0);
+  
+  cv::Mat adaptive_sharp, gentle_sharp;
+  cv::filter2D(enhanced_frame, adaptive_sharp, enhanced_frame.depth(), adaptive_kernel);
+  cv::filter2D(enhanced_frame, gentle_sharp, enhanced_frame.depth(), gentle_kernel);
+  
+  // blend based on edge detection: use adaptive sharpening on edges, gentle on smooth areas
+  for (int y = 0; y < enhanced_frame.rows; ++y) {
+    for (int x = 0; x < enhanced_frame.cols; ++x) {
+      float edge_strength = edge_mask.at<float>(y, x);
+      cv::Vec3b original = enhanced_frame.at<cv::Vec3b>(y, x);
+      cv::Vec3b adaptive = adaptive_sharp.at<cv::Vec3b>(y, x);
+      cv::Vec3b gentle = gentle_sharp.at<cv::Vec3b>(y, x);
+      
+      cv::Vec3b result;
+      for (int c = 0; c < 3; ++c) {
+        float sharp_mix = edge_strength * adaptive[c] + (1.0f - edge_strength) * gentle[c];
+        result[c] = static_cast<uchar>(0.85f * original[c] + 0.15f * sharp_mix);
+      }
+      enhanced_frame.at<cv::Vec3b>(y, x) = result;
+    }
+  }
 
   const int height = enhanced_frame.rows;
   const int width = enhanced_frame.cols;
 
   std::string output;
   
-  // Choose rendering approach based on options
   switch (options.mode) {
     case EXACT:
       return renderExactVideo(enhanced_frame);
@@ -575,11 +603,10 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
     case ASCII_GRAY:
       return renderAsciiGrayVideo(enhanced_frame, options);
     default:
-      // ULTRA-Enhanced block character rendering with sub-pixel precision
       output.reserve(height * width * 35);
       
-      // Extended Unicode block character palette for maximum fidelity
       const std::vector<std::pair<std::string, double>> ultra_blocks = {
+        // TODO: simplify this
         {" ", 0.0},      // Empty
         {"▁", 0.125},    // 1/8 block
         {"▂", 0.25},     // 2/8 block  
@@ -613,12 +640,23 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
         {"🮑", 0.875},    // Left seven eighths block
       };
 
-      // Process frame in 2x2 pixel blocks for sub-pixel accuracy
       for (int y = 0; y < height; y += 2) {
         for (int x = 0; x < width; ++x) {
-          // Sample 2x2 pixel region for maximum detail
           std::vector<cv::Vec3b> pixels;
           std::vector<double> lumas;
+          
+          double local_gradient = 0.0;
+          if (y > 0 && y < height - 1 && x > 0 && x < width - 1) {
+            cv::Vec3b center = enhanced_frame.at<cv::Vec3b>(y, x);
+            cv::Vec3b left = enhanced_frame.at<cv::Vec3b>(y, x - 1);
+            cv::Vec3b right = enhanced_frame.at<cv::Vec3b>(y, x + 1);
+            cv::Vec3b up = enhanced_frame.at<cv::Vec3b>(y - 1, x);
+            cv::Vec3b down = enhanced_frame.at<cv::Vec3b>(y + 1, x);
+            
+            double dx = (right[0] + right[1] + right[2]) - (left[0] + left[1] + left[2]);
+            double dy = (down[0] + down[1] + down[2]) - (up[0] + up[1] + up[2]);
+            local_gradient = std::sqrt(dx * dx + dy * dy) / (3 * 255.0);
+          }
           
           for (int dy = 0; dy < 2; ++dy) {
             for (int dx = 0; dx < 1; ++dx) { // Only sample vertically for now
@@ -627,11 +665,15 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
               cv::Vec3b pixel = enhanced_frame.at<cv::Vec3b>(py, px);
               pixels.push_back(pixel);
               
-              // Perceptual luminance with gamma correction
               double r = std::pow(pixel[2] / 255.0, 2.2);
               double g = std::pow(pixel[1] / 255.0, 2.2);
               double b = std::pow(pixel[0] / 255.0, 2.2);
               double luma = std::pow(0.2126 * r + 0.7152 * g + 0.0722 * b, 1.0/2.2) * 255.0;
+              
+              if (local_gradient > 0.25) {
+                luma = luma * 1.02; // Reduced boost to prevent over-brightness
+              }
+              
               lumas.push_back(luma);
             }
           }
@@ -641,7 +683,6 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
           const double top_luma = lumas[0];
           const double bottom_luma = (lumas.size() > 1) ? lumas[1] : lumas[0];
           
-          // Advanced edge detection for better character selection
           double luma_diff = std::abs(top_luma - bottom_luma);
           double avg_luma = (top_luma + bottom_luma) / 2.0;
           double luma_ratio = (bottom_luma > 0) ? top_luma / bottom_luma : 1.0;
@@ -649,29 +690,54 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
           std::string chosen_char;
           cv::Vec3b fg_color, bg_color;
           
-          // Adaptive thresholding based on local contrast
-          double contrast_threshold = 15.0 + (avg_luma / 255.0) * 20.0; // Dynamic threshold
+          // Motion-adaptive thresholding - tighter thresholds for moving areas
+          double base_threshold = 15.0 + (avg_luma / 255.0) * 20.0;
+          double motion_factor = std::clamp(local_gradient * 1.2, 0.95, 1.15);  // Reduced sensitivity
+          double contrast_threshold = base_threshold * motion_factor;
           
           if (luma_diff < contrast_threshold) {
-            // Low contrast - use density blocks with better gradation
             double intensity = avg_luma / 255.0;
             
-            if (intensity < 0.08) {
-              chosen_char = " ";
-              fg_color = bg_color = cv::Vec3b(0, 0, 0);
-            } else if (intensity < 0.16) {
-              chosen_char = "░";
+            if (local_gradient > 0.25) { // Moving area - use fewer intermediate shades (increased threshold)
+              if (intensity < 0.15) {
+                chosen_char = " ";
+                fg_color = bg_color = cv::Vec3b(0, 0, 0);
+              } else if (intensity < 0.35) {
+                chosen_char = "░";
+                fg_color = cv::Vec3b((top_pixel[0] + bottom_pixel[0]) / 2,
+                                   (top_pixel[1] + bottom_pixel[1]) / 2,
+                                   (top_pixel[2] + bottom_pixel[2]) / 2);
+                bg_color = cv::Vec3b(0, 0, 0);
+              } else if (intensity < 0.65) {
+                chosen_char = "▓";
+                fg_color = cv::Vec3b((top_pixel[0] + bottom_pixel[0]) / 2,
+                                   (top_pixel[1] + bottom_pixel[1]) / 2,
+                                   (top_pixel[2] + bottom_pixel[2]) / 2);
+                bg_color = cv::Vec3b(0, 0, 0);
+              } else {
+                chosen_char = "█";
+                fg_color = cv::Vec3b((top_pixel[0] + bottom_pixel[0]) / 2,
+                                   (top_pixel[1] + bottom_pixel[1]) / 2,
+                                   (top_pixel[2] + bottom_pixel[2]) / 2);
+                bg_color = cv::Vec3b(0, 0, 0);
+              }
+            } else {
+              if (intensity < 0.15) {  // Increased threshold
+                chosen_char = " ";
+                fg_color = bg_color = cv::Vec3b(0, 0, 0);
+              } else if (intensity < 0.30) {  // Increased threshold
+                chosen_char = "░";
               fg_color = cv::Vec3b((top_pixel[0] + bottom_pixel[0]) / 2,
                                  (top_pixel[1] + bottom_pixel[1]) / 2,
                                  (top_pixel[2] + bottom_pixel[2]) / 2);
               bg_color = cv::Vec3b(0, 0, 0);
-            } else if (intensity < 0.32) {
+            } else if (intensity < 0.50) {  // Increased threshold
               chosen_char = "▒";
               fg_color = cv::Vec3b((top_pixel[0] + bottom_pixel[0]) / 2,
                                  (top_pixel[1] + bottom_pixel[1]) / 2,
                                  (top_pixel[2] + bottom_pixel[2]) / 2);
               bg_color = cv::Vec3b(0, 0, 0);
-            } else if (intensity < 0.64) {
+            } else if (intensity < 0.75) {  // Increased threshold
               chosen_char = "▓";
               fg_color = cv::Vec3b((top_pixel[0] + bottom_pixel[0]) / 2,
                                  (top_pixel[1] + bottom_pixel[1]) / 2,
@@ -684,25 +750,37 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
                                  (top_pixel[2] + bottom_pixel[2]) / 2);
               bg_color = cv::Vec3b(0, 0, 0);
             }
+            }
           } else {
-            // High contrast - use directional blocks with sub-pixel precision
+            // Use sharper characters for moving areas to reduce blur
+            double motion_sharpness = local_gradient > 0.1 ? 1.2 : 1.0;
+            double adjusted_luma_diff = luma_diff * motion_sharpness;
+            
             if (top_luma > bottom_luma) {
-              if (luma_diff > 120) {
-                // Strong top-heavy contrast
+              if (adjusted_luma_diff > 140 || (local_gradient > 0.15 && luma_diff > 100)) {
+                // Strong contrast or motion - use clear directional block
                 chosen_char = "▀";
                 fg_color = top_pixel;
                 bg_color = bottom_pixel;
-              } else if (luma_diff > 80) {
-                // Medium contrast with gradient effect
-                if (luma_ratio > 2.0) {
-                  chosen_char = "▔"; // Top overline
+              } else if (adjusted_luma_diff > 90) {
+                if (local_gradient > 0.12) {
+                  chosen_char = "▀"; // Stick to simple blocks for motion
                 } else {
-                  chosen_char = "▀";
+                  if (luma_ratio > 2.0) {
+                    chosen_char = "▔"; // Top overline
+                  } else {
+                    chosen_char = "▀";
+                  }
                 }
                 fg_color = top_pixel;
                 bg_color = bottom_pixel;
-              } else if (luma_diff > 40) {
-                chosen_char = "▞"; // Diagonal for subtle contrast
+              } else if (adjusted_luma_diff > 45) {
+                // Lower contrast - avoid complex patterns in motion
+                if (local_gradient > 0.1) {
+                  chosen_char = "░"; // Simple pattern for motion
+                } else {
+                  chosen_char = "▞"; // Diagonal for subtle contrast in static areas
+                }
                 fg_color = top_pixel;
                 bg_color = bottom_pixel;
               } else {
@@ -711,22 +789,28 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
                 bg_color = bottom_pixel;
               }
             } else {
-              if (luma_diff > 120) {
-                // Strong bottom-heavy contrast
+              if (adjusted_luma_diff > 140 || (local_gradient > 0.15 && luma_diff > 100)) {
                 chosen_char = "▄";
                 fg_color = bottom_pixel;
                 bg_color = top_pixel;
-              } else if (luma_diff > 80) {
-                // Medium contrast
-                if (1.0/luma_ratio > 2.0) {
-                  chosen_char = "▁"; // Bottom underline
+              } else if (adjusted_luma_diff > 90) {
+                if (local_gradient > 0.12) {
+                  chosen_char = "▄"; // Simple blocks for motion
                 } else {
-                  chosen_char = "▄";
+                  if (1.0/luma_ratio > 2.0) {
+                    chosen_char = "▁"; // Bottom underline
+                  } else {
+                    chosen_char = "▄";
+                  }
                 }
                 fg_color = bottom_pixel;
                 bg_color = top_pixel;
-              } else if (luma_diff > 40) {
-                chosen_char = "▚"; // Diagonal for subtle contrast
+              } else if (adjusted_luma_diff > 45) {
+                if (local_gradient > 0.1) {
+                  chosen_char = "▒"; // Simple pattern for motion
+                } else {
+                  chosen_char = "▚"; // Diagonal for subtle contrast in static areas
+                }
                 fg_color = bottom_pixel;
                 bg_color = top_pixel;
               } else {
@@ -737,11 +821,9 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
             }
           }
 
-          // Color enhancement for better visual appeal
           auto enhance_color = [](const cv::Vec3b& color) -> cv::Vec3b {
             cv::Vec3b enhanced;
             for (int i = 0; i < 3; ++i) {
-              // Slight saturation boost and gamma correction
               double normalized = color[i] / 255.0;
               double gamma_corrected = std::pow(normalized, 0.9); // Slight brightness boost
               enhanced[i] = static_cast<uchar>(std::clamp(gamma_corrected * 255.0, 0.0, 255.0));
@@ -752,7 +834,6 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
           fg_color = enhance_color(fg_color);
           bg_color = enhance_color(bg_color);
 
-          // Optimized ANSI color output with better formatting
           output += "\033[48;2;";
           output += std::to_string(bg_color[2]);
           output += ";";
@@ -776,7 +857,6 @@ std::string Sakura::renderVideoEnhanced(const cv::Mat &frame, const RenderOption
   return output;
 }
 
-// Helper methods for different video rendering modes
 std::string Sakura::renderExactVideo(const cv::Mat &frame) const {
   const int height = frame.rows / 2;
   const int width = frame.cols;
@@ -836,7 +916,6 @@ std::string Sakura::renderAsciiGrayVideo(const cv::Mat &frame, const RenderOptio
   cv::Mat gray;
   cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
   
-  // Apply edge enhancement for better detail preservation
   cv::Mat enhanced_gray;
   cv::Mat blur;
   cv::GaussianBlur(gray, blur, cv::Size(3, 3), 0.5);
@@ -850,7 +929,7 @@ std::string Sakura::renderAsciiGrayVideo(const cv::Mat &frame, const RenderOptio
   std::string output;
   output.reserve(width * height + height); // +height for newlines
 
-  // Advanced Floyd-Steinberg dithering with better error distribution
+  // apply Floyd-Steinberg dithering with better error distribution
   if (options.dither == FLOYD_STEINBERG) {
     cv::Mat error = cv::Mat::zeros(height + 1, width + 2, CV_32F); // Padded for bounds checking
     enhanced_gray.convertTo(enhanced_gray, CV_32F, 1.0 / 255.0);
@@ -862,7 +941,6 @@ std::string Sakura::renderAsciiGrayVideo(const cv::Mat &frame, const RenderOptio
       for (int x = 0; x < width; ++x) {
         float old_value = std::clamp(enhanced_gray.at<float>(y, x) + error.at<float>(y, x + 1), 0.0f, 1.0f);
         
-        // Improved quantization with better threshold handling
         int level;
         if (num_chars <= 2) {
           level = old_value > 0.5 ? num_chars - 1 : 0;
@@ -873,7 +951,6 @@ std::string Sakura::renderAsciiGrayVideo(const cv::Mat &frame, const RenderOptio
         float chosen_value = static_cast<float>(level) / std::max(1, num_chars - 1);
         float err = old_value - chosen_value;
 
-        // Enhanced error distribution with improved coefficients
         const float total_error = err;
         error.at<float>(y, x + 2) += total_error * (7.0f / 16.0f);      // Right
         error.at<float>(y + 1, x) += total_error * (3.0f / 16.0f);      // Below left  
@@ -913,7 +990,6 @@ std::string Sakura::renderAsciiGrayVideo(const cv::Mat &frame, const RenderOptio
       output += line + '\n';
     }
   } else {
-    // Improved threshold mapping with better distribution
     for (int y = 0; y < height; ++y) {
       std::string line;
       line.reserve(width);
@@ -921,7 +997,6 @@ std::string Sakura::renderAsciiGrayVideo(const cv::Mat &frame, const RenderOptio
       for (int x = 0; x < width; ++x) {
         const int intensity = enhanced_gray.at<uchar>(y, x);
         
-        // Non-linear mapping for better perceptual distribution
         double normalized = intensity / 255.0;
         double gamma_corrected = std::pow(normalized, 1.2); // Slightly darker midtones
         int idx = static_cast<int>(gamma_corrected * (num_chars - 1));
