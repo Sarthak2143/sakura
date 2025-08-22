@@ -1,7 +1,7 @@
 # Sakura 
 
 A high-### Core Capabilities
-- **Ultra-Enhanced ASCII Rendering**: Cinema-quality video with HDR-like processing, sub-pixel precision, and 30+ Unicode block characters
+- **Ultra-Enhanced ASCII Rendering**: High-quality video with HDR-like processing, sub-pixel precision, and 30+ Unicode block characters
 - **Advanced Image Processing**: CLAHE contrast enhancement, intelligent sharpening, perceptual luminance, and LAB color space processing
 - **Multiple Rendering Modes**: SIXEL graphics, enhanced ASCII color blocks, ultra-fine grayscale, and true-color terminal output
 - **Multi-format Support**: Images (JPG, PNG, BMP), animated GIFs, and videos (MP4, AVI, MOV, MKV)
@@ -15,7 +15,7 @@ A high-### Core Capabilities
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
- - [Technical Implementation](#technical-implementation)
+- [Technical Implementation](#technical-implementation)
 - [Performance Optimizations](#performance-optimizations)
 - [SIXEL Terminal Support](#sixel-terminal-support)
 - [API Documentation](#api-documentation)
