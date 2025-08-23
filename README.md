@@ -520,14 +520,6 @@ make -j$(nproc)
 valgrind --leak-check=full ./sakura --image test.jpg
 ```
 
-### Code Style
-
-- Follow C++17 standards
-- Use meaningful variable names  
-- Add comments for complex algorithms
-- Keep functions focused and concise
-- Use const-correctness where applicable
-
 ## Acknowledgments
 
 - **libsixel** - SIXEL graphics encoding library

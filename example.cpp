@@ -114,7 +114,8 @@ bool process_local_video(std::string path) {
 
   Sakura::RenderOptions options;
   options.mode = Sakura::EXACT; // Use EXACT mode for enhanced quality
-  options.dither = Sakura::FLOYD_STEINBERG;
+  options.style = Sakura::MICRO;
+  options.dither = Sakura::ATKINSON;
   options.terminalAspectRatio = 1.0;
   options.width = termCols;
   options.height = termRows;
@@ -128,7 +129,8 @@ bool process_local_video(std::string path) {
   options.hwAccelPipe = false;
   options.tileUpdates = false;
   options.fit = Sakura::FitMode::COVER; // Fill terminal
-  options.sixelQuality = Sakura::SixelQuality::HIGH;
+  options.brightness = 10;
+  options.contrast = 1.2;
 
   stat = sakura.renderVideoFromFile(path, options);
   return stat;
