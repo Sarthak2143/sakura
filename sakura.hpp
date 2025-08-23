@@ -30,7 +30,7 @@ public:
     int prebufferFrames = 4;
     bool staticPalette = false;
     FitMode fit = COVER;
-    bool fastResize = false; // Use INTER_NEAREST for video pre-scaling
+    bool fastResize = false;          // Use INTER_NEAREST for video pre-scaling
     SixelQuality sixelQuality = HIGH; // Add this line
     // Throughput controls
     double targetFps =
@@ -43,11 +43,12 @@ public:
     double maxScaleFactor = 1.00; // up to full size
     double scaleStep = 0.05;      // adjust step per window
     // Hardware-accelerated decode and tiled updates
-    bool hwAccelPipe = false;     // use ffmpeg pipe with -hwaccel auto
-    bool tileUpdates = false;     // send only changed tiles each frame
-    int tileWidth = 128;          // tile width in pixels
-    int tileHeight = 64;          // tile height in pixels
-    double tileDiffThreshold = 6.0; // average abs diff per channel to trigger update
+    bool hwAccelPipe = false; // use ffmpeg pipe with -hwaccel auto
+    bool tileUpdates = false; // send only changed tiles each frame
+    int tileWidth = 128;      // tile width in pixels
+    int tileHeight = 64;      // tile height in pixels
+    double tileDiffThreshold =
+        6.0; // average abs diff per channel to trigger update
   };
 
   bool renderFromUrl(std::string_view url, const RenderOptions &options) const;
@@ -79,11 +80,19 @@ private:
   std::vector<std::string> renderAsciiGrayscale(const cv::Mat &resized,
                                                 std::string_view charSet,
                                                 DitherMode dither) const;
-  std::string renderSixel(const cv::Mat &img, int paletteSize = 16, int output_width = 0, int output_height = 0, SixelQuality quality = HIGH) const;
-  std::string renderVideoEnhanced(const cv::Mat &frame, const RenderOptions &options) const; // Enhanced video method
-  std::string renderExactVideo(const cv::Mat &frame) const; // Helper for exact video rendering
-  std::string renderAsciiColorVideo(const cv::Mat &frame) const; // Helper for color ASCII video
-  std::string renderAsciiGrayVideo(const cv::Mat &frame, const RenderOptions &options) const; // Helper for grayscale ASCII video
+  std::string renderSixel(const cv::Mat &img, int paletteSize = 16,
+                          int output_width = 0, int output_height = 0,
+                          SixelQuality quality = HIGH) const;
+  std::string renderVideoEnhanced(
+      const cv::Mat &frame,
+      const RenderOptions &options) const; // Enhanced video method
+  std::string renderExactVideo(
+      const cv::Mat &frame) const; // Helper for exact video rendering
+  std::string renderAsciiColorVideo(
+      const cv::Mat &frame) const; // Helper for color ASCII video
+  std::string renderAsciiGrayVideo(
+      const cv::Mat &frame,
+      const RenderOptions &options) const; // Helper for grayscale ASCII video
   cv::Mat quantizeImage(const cv::Mat &inputImg, int numColors,
                         cv::Mat &palette) const;
   bool preprocessAndResize(const cv::Mat &img, const RenderOptions &options,

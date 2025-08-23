@@ -211,7 +211,8 @@ int main(int argc, char **argv) {
 
   std::cout << "Sakura Video Player with SIXEL\n";
   std::cout << "1. Image\n2. GIF\n3. Video (URL)\n4. Video (File)\n";
-  std::cout << "Choose option (1-4): ";  int choice;
+  std::cout << "Choose option (1-4): ";
+  int choice;
   std::cin >> choice;
 
   switch (choice) {
@@ -239,7 +240,8 @@ int main(int argc, char **argv) {
   case 4: {
     std::cout << "Enter video file path: ";
     std::cin >> localVideoPath;
-    std::cout << "Rendering video from file (Enhanced Quality mode with audio)...\n";
+    std::cout
+        << "Rendering video from file (Enhanced Quality mode with audio)...\n";
 
     stat = process_local_video(localVideoPath);
     break;
