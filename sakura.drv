@@ -1,0 +1,120 @@
+Running phase: unpackPhase
+@nix { "action": "setPhase", "phase": "unpackPhase" }
+unpacking source archive /nix/store/pnw2vq83inyq5zi3zp1dlka1irin1n5v-source
+source root is source
+Running phase: patchPhase
+@nix { "action": "setPhase", "phase": "patchPhase" }
+Running phase: updateAutotoolsGnuConfigScriptsPhase
+@nix { "action": "setPhase", "phase": "updateAutotoolsGnuConfigScriptsPhase" }
+Running phase: configurePhase
+@nix { "action": "setPhase", "phase": "configurePhase" }
+fixing cmake files...
+cmake flags: -DCMAKE_FIND_USE_SYSTEM_PACKAGE_REGISTRY=OFF -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF -DCMAKE_EXPORT_NO_PACKAGE_REGISTRY=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_INSTALL_LOCALEDIR=/nix/store/7l1zgp68jl5hzwpzgqxw3bnz9malaaf2-sakura/share/locale -DCMAKE_INSTALL_LIBEXECDIR=/nix/store/7l1zgp68jl5hzwpzgqxw3bnz9malaaf2-sakura/libexec -DCMAKE_INSTALL_LIBDIR=/nix/store/7l1zgp68jl5hzwpzgqxw3bnz9malaaf2-sakura/lib -DCMAKE_INSTALL_DOCDIR=/nix/store/7l1zgp68jl5hzwpzgqxw3bnz9malaaf2-sakura/share/doc/sakura -DCMAKE_INSTALL_INFODIR=/nix/store/7l1zgp68jl5hzwpzgqxw3bnz9malaaf2-sakura/share/info -DCMAKE_INSTALL_MANDIR=/nix/store/7l1zgp68jl5hzwpzgqxw3bnz9malaaf2-sakura/share/man -DCMAKE_INSTALL_INCLUDEDIR=/nix/store/7l1zgp68jl5hzwpzgqxw3bnz9malaaf2-sakura/include -DCMAKE_INSTALL_SBINDIR=/nix/store/7l1zgp68jl5hzwpzgqxw3bnz9malaaf2-sakura/sbin -DCMAKE_INSTALL_BINDIR=/nix/store/7l1zgp68jl5hzwpzgqxw3bnz9malaaf2-sakura/bin -DCMAKE_INSTALL_NAME_DIR=/nix/store/7l1zgp68jl5hzwpzgqxw3bnz9malaaf2-sakura/lib -DCMAKE_POLICY_DEFAULT_CMP0025=NEW -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_STRIP=/nix/store/1d75h3iiq3mj4liis8cm1cbrldc9hwav-gcc-wrapper-15.1.0/bin/strip -DCMAKE_RANLIB=/nix/store/1d75h3iiq3mj4liis8cm1cbrldc9hwav-gcc-wrapper-15.1.0/bin/ranlib -DCMAKE_AR=/nix/store/1d75h3iiq3mj4liis8cm1cbrldc9hwav-gcc-wrapper-15.1.0/bin/ar -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_INSTALL_PREFIX=/nix/store/7l1zgp68jl5hzwpzgqxw3bnz9malaaf2-sakura -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_FLAGS= -DCMAKE_C_FLAGS=
+-- The C compiler identification is GNU 15.1.0
+-- The CXX compiler identification is GNU 15.1.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /nix/store/1d75h3iiq3mj4liis8cm1cbrldc9hwav-gcc-wrapper-15.1.0/bin/gcc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /nix/store/1d75h3iiq3mj4liis8cm1cbrldc9hwav-gcc-wrapper-15.1.0/bin/g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found PkgConfig: /nix/store/7vrzhnby95407cbbahn3fj3y98qifgby-pkg-config-wrapper-0.29.2/bin/pkg-config (found version "0.29.2")
+-- Could not find sixel via pkg-config. Searching manually.
+-- Found sixel manually.
+-- Found OpenSSL: /nix/store/lyl9yxxz8a3mlaxvm0jln6mglpbf2fha-openssl-3.5.1/lib/libcrypto.so (found version "3.5.1")
+-- Found OpenCV: / (found version "4.11.0") found components: core imgproc highgui videoio
+-- Found CURL: /nix/store/95iy4kvy1xllg2fpb14dhw4m3ff3l0f0-curl-8.14.1/lib/libcurl.so (found version "8.14.1")
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Configuring done (0.8s)
+-- Generating done (0.0s)
+[33mCMake Warning:
+  Manually-specified variables were not used by the project:
+
+    CMAKE_EXPORT_NO_PACKAGE_REGISTRY
+    CMAKE_INSTALL_DOCDIR
+    CMAKE_INSTALL_INCLUDEDIR
+    CMAKE_INSTALL_INFODIR
+    CMAKE_INSTALL_LIBDIR
+    CMAKE_INSTALL_LIBEXECDIR
+    CMAKE_INSTALL_LOCALEDIR
+    CMAKE_INSTALL_MANDIR
+    CMAKE_INSTALL_SBINDIR
+    CMAKE_POLICY_DEFAULT_CMP0025
+
+[0m
+-- Build files have been written to: /build/source/build
+cmake: enabled parallel building
+cmake: enabled parallel installing
+Running phase: buildPhase
+@nix { "action": "setPhase", "phase": "buildPhase" }
+build flags: -j12 SHELL=/nix/store/gkwbw9nzbkbz298njbn3577zmrnglbbi-bash-5.3p0/bin/bash
+/nix/store/a3w3ka2d796ghlhf31il839c0658m5ih-cmake-3.31.7/bin/cmake -S/build/source -B/build/source/build --check-build-system CMakeFiles/Makefile.cmake 0
+/nix/store/a3w3ka2d796ghlhf31il839c0658m5ih-cmake-3.31.7/bin/cmake -E cmake_progress_start /build/source/build/CMakeFiles /build/source/build//CMakeFiles/progress.marks
+make  -f CMakeFiles/Makefile2 all
+make[1]: Entering directory '/build/source/build'
+make  -f CMakeFiles/SakuraLib.dir/build.make CMakeFiles/SakuraLib.dir/depend
+make[2]: Entering directory '/build/source/build'
+cd /build/source/build && /nix/store/a3w3ka2d796ghlhf31il839c0658m5ih-cmake-3.31.7/bin/cmake -E cmake_depends "Unix Makefiles" /build/source /build/source /build/source/build /build/source/build /build/source/build/CMakeFiles/SakuraLib.dir/DependInfo.cmake "--color="
+make[2]: Leaving directory '/build/source/build'
+make  -f CMakeFiles/SakuraLib.dir/build.make CMakeFiles/SakuraLib.dir/build
+make[2]: Entering directory '/build/source/build'
+[ 25%] [32mBuilding CXX object CMakeFiles/SakuraLib.dir/sakura.cpp.o[0m
+/nix/store/1d75h3iiq3mj4liis8cm1cbrldc9hwav-gcc-wrapper-15.1.0/bin/g++  -isystem /nix/store/dq8jrf3i4f4qxrg5aa64k7jciwp680lj-opencv-4.11.0/include/opencv4 -finput-charset=UTF-8 -fexec-charset=UTF-8 -O3 -DNDEBUG -march=native -flto -std=gnu++17 -MD -MT CMakeFiles/SakuraLib.dir/sakura.cpp.o -MF CMakeFiles/SakuraLib.dir/sakura.cpp.o.d -o CMakeFiles/SakuraLib.dir/sakura.cpp.o -c /build/source/sakura.cpp
+warning: Skipping impure flag -march=native because NIX_ENFORCE_NO_NATIVE is set
+[01m[K/build/source/sakura.cpp:30:62:[m[K [01;35m[Kwarning: [m[Kunpaired UTF-8 bidirectional control characters detected [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc-15.1.0/gcc/Warning-Options.html#index-Wbidi-chars-Wbidi-chars=]8;;[m[K]
+   30 | const std::string Sakura::ASCII_CHARS_MICRO = " .<U+00B7><U+2236><U+205A><U+205B><U+205C><U+205D><U+205E><U+205F><U+2060><U+2061><U+2062><U+2063><U+2064><U+2065>[32m[K<U+2066>[m[K[34m[K<U+2067>[m[K<U+2068><U+2069><U+206A><U+206B><U+206C><U+206D><U+206E><U+206F><U+2591><U+2592><U+2593><U+2588>";
+      |                                                                                                                                                                  [32m[K~~~~~~~~[m[K[34m[K~~~~~~~~[m[K                                                                                                 
+      |                                                                                                                                                                  [32m[K|[m[K       [34m[K|[m[K                                                                                                       [01;35m[K|[m[K
+      |                                                                                                                                                                  [32m[K|[m[K       [34m[KU+2067 (RIGHT-TO-LEFT ISOLATE)[m[K                                                                          [01;35m[Kend of bidirectional context[m[K
+      |                                                                                                                                                                  [32m[KU+2066 (LEFT-TO-RIGHT ISOLATE)[m[K
+[01m[K/build/source/sakura.cpp:[m[K In member function '[01m[Kbool Sakura::[01;32m[KrenderVideoFromFile[m[K(std::string_view, const RenderOptions&) const[m[K':
+[01m[K/build/source/sakura.cpp:1239:14:[m[K [01;35m[Kwarning: [m[Kignoring return value of '[01m[Kint[01;32m[K system[m[K(const char*)[m[K' declared with attribute '[01m[K]8;;https://gcc.gnu.org/onlinedocs/gcc-15.1.0/gcc/Common-Function-Attributes.html#index-warn_005funused_005fresult-function-attributewarn_unused_result]8;;[m[K' [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc-15.1.0/gcc/Warning-Options.html#index-Wno-unused-result-Wunused-result]8;;[m[K]
+ 1239 |   [01;35m[Kstd::system(audio_cmd.c_str())[m[K;
+      |   [01;35m[K~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~[m[K
+[01m[K/build/source/sakura.cpp:1279:14:[m[K [01;35m[Kwarning: [m[Kignoring return value of '[01m[Kint[01;32m[K system[m[K(const char*)[m[K' declared with attribute '[01m[K]8;;https://gcc.gnu.org/onlinedocs/gcc-15.1.0/gcc/Common-Function-Attributes.html#index-warn_005funused_005fresult-function-attributewarn_unused_result]8;;[m[K' [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc-15.1.0/gcc/Warning-Options.html#index-Wno-unused-result-Wunused-result]8;;[m[K]
+ 1279 |   [01;35m[Kstd::system("pkill -f 'ffplay.*-nodisp' 2>/dev/null")[m[K;
+      |   [01;35m[K~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[ 50%] [32m[1mLinking CXX static library libSakuraLib.a[0m
+/nix/store/a3w3ka2d796ghlhf31il839c0658m5ih-cmake-3.31.7/bin/cmake -P CMakeFiles/SakuraLib.dir/cmake_clean_target.cmake
+/nix/store/a3w3ka2d796ghlhf31il839c0658m5ih-cmake-3.31.7/bin/cmake -E cmake_link_script CMakeFiles/SakuraLib.dir/link.txt --verbose=1
+/nix/store/1d75h3iiq3mj4liis8cm1cbrldc9hwav-gcc-wrapper-15.1.0/bin/ar qc libSakuraLib.a CMakeFiles/SakuraLib.dir/sakura.cpp.o
+/nix/store/1d75h3iiq3mj4liis8cm1cbrldc9hwav-gcc-wrapper-15.1.0/bin/ar: CMakeFiles/SakuraLib.dir/sakura.cpp.o: plugin needed to handle lto object
+/nix/store/1d75h3iiq3mj4liis8cm1cbrldc9hwav-gcc-wrapper-15.1.0/bin/ranlib libSakuraLib.a
+/nix/store/1d75h3iiq3mj4liis8cm1cbrldc9hwav-gcc-wrapper-15.1.0/bin/ranlib: libSakuraLib.a(sakura.cpp.o): plugin needed to handle lto object
+make[2]: Leaving directory '/build/source/build'
+[ 50%] Built target SakuraLib
+make  -f CMakeFiles/sakura.dir/build.make CMakeFiles/sakura.dir/depend
+make[2]: Entering directory '/build/source/build'
+cd /build/source/build && /nix/store/a3w3ka2d796ghlhf31il839c0658m5ih-cmake-3.31.7/bin/cmake -E cmake_depends "Unix Makefiles" /build/source /build/source /build/source/build /build/source/build /build/source/build/CMakeFiles/sakura.dir/DependInfo.cmake "--color="
+make[2]: Leaving directory '/build/source/build'
+make  -f CMakeFiles/sakura.dir/build.make CMakeFiles/sakura.dir/build
+make[2]: Entering directory '/build/source/build'
+[ 75%] [32mBuilding CXX object CMakeFiles/sakura.dir/example.cpp.o[0m
+/nix/store/1d75h3iiq3mj4liis8cm1cbrldc9hwav-gcc-wrapper-15.1.0/bin/g++  -I/build/source/. -isystem /nix/store/dq8jrf3i4f4qxrg5aa64k7jciwp680lj-opencv-4.11.0/include/opencv4 -finput-charset=UTF-8 -fexec-charset=UTF-8 -O3 -DNDEBUG -march=native -flto -std=gnu++17 -MD -MT CMakeFiles/sakura.dir/example.cpp.o -MF CMakeFiles/sakura.dir/example.cpp.o.d -o CMakeFiles/sakura.dir/example.cpp.o -c /build/source/example.cpp
+warning: Skipping impure flag -march=native because NIX_ENFORCE_NO_NATIVE is set
+[100%] [32m[1mLinking CXX executable sakura[0m
+/nix/store/a3w3ka2d796ghlhf31il839c0658m5ih-cmake-3.31.7/bin/cmake -E cmake_link_script CMakeFiles/sakura.dir/link.txt --verbose=1
+/nix/store/1d75h3iiq3mj4liis8cm1cbrldc9hwav-gcc-wrapper-15.1.0/bin/g++  -finput-charset=UTF-8 -fexec-charset=UTF-8 -O3 -DNDEBUG -march=native -flto -Wl,--dependency-file=CMakeFiles/sakura.dir/link.d CMakeFiles/sakura.dir/example.cpp.o -o sakura  libSakuraLib.a /nix/store/dq8jrf3i4f4qxrg5aa64k7jciwp680lj-opencv-4.11.0/lib/libopencv_highgui.so.4.11.0 /nix/store/dq8jrf3i4f4qxrg5aa64k7jciwp680lj-opencv-4.11.0/lib/libopencv_videoio.so.4.11.0 /nix/store/j00m0pkjhb9jg0y16zip41387i404z94-libsixel-1.10.5/lib/libsixel.so /nix/store/dq8jrf3i4f4qxrg5aa64k7jciwp680lj-opencv-4.11.0/lib/libopencv_imgcodecs.so.4.11.0 /nix/store/dq8jrf3i4f4qxrg5aa64k7jciwp680lj-opencv-4.11.0/lib/libopencv_imgproc.so.4.11.0 /nix/store/dq8jrf3i4f4qxrg5aa64k7jciwp680lj-opencv-4.11.0/lib/libopencv_core.so.4.11.0 /nix/store/cd6rl760mndi8cdzdf3p1x5jnjcdwrpz-libcpr-1.12.0/lib/libcpr.so.1.12.0 /nix/store/95iy4kvy1xllg2fpb14dhw4m3ff3l0f0-curl-8.14.1/lib/libcurl.so /nix/store/95iy4kvy1xllg2fpb14dhw4m3ff3l0f0-curl-8.14.1/lib/libcurl.so
+warning: Skipping impure flag -march=native because NIX_ENFORCE_NO_NATIVE is set
+/nix/store/wi0nl3i48dl27dalzrrlq4n9a6mrl63y-binutils-2.44/bin/ld: /build/ccufjCLM.ltrans0.ltrans.o: in function `process_gif(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)':
+<artificial>:(.text+0x1297): undefined reference to `Sakura::renderGifFromUrl(std::basic_string_view<char, std::char_traits<char> >, Sakura::RenderOptions const&) const'
+/nix/store/wi0nl3i48dl27dalzrrlq4n9a6mrl63y-binutils-2.44/bin/ld: /build/ccufjCLM.ltrans0.ltrans.o: in function `process_video(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)':
+<artificial>:(.text+0x1407): undefined reference to `Sakura::renderVideoFromUrl(std::basic_string_view<char, std::char_traits<char> >, Sakura::RenderOptions const&) const'
+/nix/store/wi0nl3i48dl27dalzrrlq4n9a6mrl63y-binutils-2.44/bin/ld: /build/ccufjCLM.ltrans0.ltrans.o: in function `process_local_video(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)':
+<artificial>:(.text+0x1572): undefined reference to `Sakura::renderVideoFromFile(std::basic_string_view<char, std::char_traits<char> >, Sakura::RenderOptions const&) const'
+/nix/store/wi0nl3i48dl27dalzrrlq4n9a6mrl63y-binutils-2.44/bin/ld: /build/ccufjCLM.ltrans0.ltrans.o: in function `process_image(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)':
+<artificial>:(.text+0x2496): undefined reference to `Sakura::renderFromMat(cv::Mat const&, Sakura::RenderOptions const&) const'
+/nix/store/wi0nl3i48dl27dalzrrlq4n9a6mrl63y-binutils-2.44/bin/ld: /build/ccufjCLM.ltrans0.ltrans.o: in function `main':
+<artificial>:(.text.startup+0x1e49): undefined reference to `Sakura::renderFromMat(cv::Mat const&, Sakura::RenderOptions const&) const'
+collect2: error: ld returned 1 exit status
+make[2]: *** [CMakeFiles/sakura.dir/build.make:114: sakura] Error 1
+make[2]: Leaving directory '/build/source/build'
+make[1]: *** [CMakeFiles/Makefile2:125: CMakeFiles/sakura.dir/all] Error 2
+make[1]: Leaving directory '/build/source/build'
+make: *** [Makefile:139: all] Error 2

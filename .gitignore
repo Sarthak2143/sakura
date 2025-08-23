@@ -2,3 +2,4 @@ build/
 .vscode/
 media/
 .cache/
+result/

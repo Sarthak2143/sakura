@@ -50,13 +50,24 @@
                 openssl
               ];
 
+              NIX_CFLAGS_COMPILE = "";
+              NIX_CXXFLAGS_COMPILE = "";
+              NIX_LDFLAGS = "";
+
               cmakeFlags = [
-                "--no-warn-unused-cli"
-                "-O3"
-                "-DNDEBUG"
-                "-march=native"
-                "-flto"
+                "-DCMAKE_BUILD_TYPE=Release"
+                "-DBUILD_TESTING=OFF"
+                "-DCMAKE_VERBOSE_MAKEFILE=ON"
+                "-DCMAKE_CXX_FLAGS="
+                "-DCMAKE_C_FLAGS="
+                "-DCMAKE_AR=${pkgs.gcc15Stdenv.cc.cc}/bin/gcc-ar"
+                "-DCMAKE_RANLIB=${pkgs.gcc15Stdenv.cc.cc}/bin/gcc-ranlib"
               ];
+
+              preBuild = ''
+                export CXXFLAGS="-O3 -flto"
+                export CFLAGS="-O3 -flto"
+              '';
             };
           }
         )
