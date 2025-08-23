@@ -51,11 +51,11 @@
               ];
 
               cmakeFlags = [
-                "--no-warn-unused-cli",
-                "-O3",
-                "-DNDEBUG",
-                "-march=native",
-                "-flto"
+                "--no-warn-unused-cli"
+                # "-O3",
+                # "-DNDEBUG",
+                # "-march=native",
+                # "-flto"
               ];
             };
           }
