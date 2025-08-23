@@ -1,14 +1,6 @@
 # Sakura 
 
-A high-### Core Capabilities
-- **Ultra-Enhanced ASCII Rendering**: High-quality video with HDR-like processing, sub-pixel precision, and 30+ Unicode block characters
-- **Advanced Image Processing**: CLAHE contrast enhancement, intelligent sharpening, perceptual luminance, and LAB color space processing
-- **Multiple Rendering Modes**: SIXEL graphics, enhanced ASCII color blocks, ultra-fine grayscale, and true-color terminal output
-- **Multi-format Support**: Images (JPG, PNG, BMP), animated GIFs, and videos (MP4, AVI, MOV, MKV)
-- **Synchronized Audio**: Real-time audio playback with video using ffplay
-- **Adaptive Scaling / Fit Modes**: Fill the terminal using fit modes (contain, cover, stretch)
-- **URL Download**: Direct streaming from web URLs
-- **Performance Optimization**: Predecode queue, target-FPS downsampling, adaptive palette/scale, and precise frame pacingance ultra-enhanced terminal-based multimedia library that renders images, GIFs, and videos with **cinema-quality ASCII rendering** and synchronized audio playback. Features advanced HDR-like processing, sub-pixel precision, and professional-grade visual quality.
+A high-performance minimal terminal-based multimedia library that renders images, GIFs, and videos with **SIXEL graphics** and **enhanced ASCII rendering** modes. Features real-time audio playback synchronization and advanced rendering options.
 
 ## Table of Contents
 
@@ -25,31 +17,41 @@ A high-### Core Capabilities
 ## Features
 
 ### Core Capabilities
+
 - **SIXEL Graphics Rendering**: Pixel-perfect graphics directly in the terminal using libsixel
 - **Multi-format Support**: Images (JPG, PNG, BMP), animated GIFs, and videos (MP4, AVI, MOV, MKV)
-- **Synchronized Audio**: Real-time audio playback with video using ffplay
- - **Adaptive Scaling / Fit Modes**: Fill the terminal using fit modes (contain, cover, stretch)
+- **Synchronized Audio**: Real-time audio playbook with video using ffmpeg
 - **URL Download**: Direct streaming from web URLs
-- **Performance Optimization**: Predecode queue, target-FPS downsampling, adaptive palette/scale, and precise frame pacing
+- **Multiple Rendering Modes**: SIXEL, enhanced ASCII, ASCII color, and grayscale modes
+- **Adaptive Scaling**: Terminal-aware sizing with aspect ratio preservation
+- **Performance Optimizations**: Predecode queue, frame pacing, and adaptive palette
 
 ### Rendering Modes
 
-1. **Enhanced ASCII Mode**: Ultra-high quality with HDR-like processing, CLAHE contrast enhancement, and sub-pixel precision (DEFAULT)
-2. **SIXEL Mode**: Pixel-perfect graphics with full color palette for supported terminals
-3. **ASCII Color**: Block-based color rendering with 24-bit RGB
-4. **ASCII Grayscale**: Character-based monochrome with advanced dithering algorithms
+1. **EXACT Mode**: Enhanced ASCII rendering with block characters and precise terminal fitting
+2. **SIXEL Mode**: Pixel-perfect graphics with full color palette for supported terminals  
+3. **ASCII_COLOR Mode**: Block-based color rendering with 24-bit RGB
+4. **ASCII_GRAY Mode**: Character-based monochrome with dithering support
 
-### Ultra-Enhanced Quality Features
+### Character Sets
 
-- **HDR-Like Processing**: Adaptive histogram equalization (CLAHE) and intelligent edge sharpening
-- **Sub-Pixel Precision**: 2x2 pixel sampling with perceptual luminance calculations
-- **Advanced Character Sets**: 30+ Unicode blocks including ░▒▓█▀▄▌▐▖▗▘▝▙▚▛▜▞▟ and micro-detail characters
-- **Smart Dithering**: Floyd-Steinberg and Atkinson algorithms with gamma-aware processing
-- **Color Enhancement**: LAB color space processing with automatic saturation boost
+- **SIMPLE**: Basic ASCII characters (` .:-=+*#%@`)
+- **DETAILED**: Extended ASCII set with 69 characters
+- **BLOCKS**: Unicode block characters (`░▒▓█`)
+- **ULTRA**: High-quality blocks (`▁▂▃▄▅▆▇█`)
+- **MICRO**: Ultra-fine detail characters for premium quality
+
+### Advanced Features
+
+- **Smart Dithering**: Floyd-Steinberg and Atkinson dithering algorithms
+- **Fit Modes**: STRETCH, COVER, CONTAIN for optimal terminal usage
+- **Hardware Acceleration**: Optional ffmpeg hardware decode pipeline
+- **Tiled Updates**: Send only changed regions for better performance
+- **Adaptive Quality**: Dynamic palette and scale adjustments
 
 ## Installation
 
-### Build From Source
+### Dependencies
 
 ```bash
 # Ubuntu/Debian
@@ -88,10 +90,11 @@ cmake ..
 make -j$(nproc)
 ```
 
-#### Quick Start
+### Quick Start
 
 ```bash
-./sakura
+./sakura --help
+./sakura --image https://picsum.photos/800/600
 ```
 
 ### NixOS
@@ -172,156 +175,69 @@ you can also install it into NixOS modules
 
 ## Usage
 
+### Command Line Interface
+
+```bash
+# Show help
+./sakura --help
+
+# Process single image
+./sakura --image https://example.com/image.jpg
+
+# Process GIF animation  
+./sakura --gif https://example.com/animation.gif
+
+# Process video from URL
+./sakura --video https://example.com/video.mp4
+
+# Process local video file
+./sakura --local-video /path/to/video.mp4
+```
+
 ### Interactive Menu
 
-When you run `./sakura`, you'll see an interactive menu:
+When you run `./sakura` without arguments, you'll see an interactive menu:
 
-```
-Sakura Ultra-Enhanced Video Player
+```text
+Sakura Video Player with SIXEL
 1. Image
 2. GIF  
 3. Video (URL)
-4. Video (File) - ULTRA QUALITY
+4. Video (File)
 Choose option (1-4):
 ```
 
-### Command Examples
-
-#### 1. Image Rendering
-```bash
-# Local image
-./sakura
-> 1
-> /path/to/image.jpg
-
-# Online image
-./sakura
-> 1  
-> https://example.com/image.png
-```
-
-#### 2. GIF Animation
-```bash
-# Local GIF
-./sakura
-> 2
-> /path/to/animation.gif
-
-# Online GIF
-./sakura
-> 2
-> https://example.com/animation.gif
-```
-
-#### 3. Video from URL
-```bash
-./sakura
-> 3
-> https://example.com/video.mp4
-```
-
-#### 4. Local Video File
-```bash
-./sakura
-> 4
-> /path/to/video.mp4
-```
-
-### Sample Media Files
-
-Test with these sample commands:
-
-```bash
-# Test image rendering
-echo -e "1\nhttps://picsum.photos/800/600" | ./sakura
-
-# Test GIF animation  
-echo -e "2\nhttps://media.giphy.com/media/3o7qE1YN7aBOFPRw8E/giphy.gif" | ./sakura
-
-# Test local video
-echo -e "4\nmedia/your_video.mp4" | ./sakura
-```
+### Usage Examples
 
 ## Technical Implementation
 
-### Ultra-Enhanced ASCII Rendering Pipeline
+### Architecture
 
-1. **HDR-Like Image Processing**: CLAHE adaptive histogram equalization with intelligent edge sharpening
-2. **Sub-Pixel Analysis**: 2x2 pixel sampling with perceptual luminance calculations (ITU-R BT.709)
-3. **Advanced Character Selection**: Smart mapping of luminance patterns to 30+ Unicode block characters
-4. **Color Enhancement**: LAB color space processing with gamma correction and saturation boost
-5. **Terminal Output**: Optimized 24-bit ANSI color sequences with precise frame timing
+Sakura uses a modern C++ architecture with the following key components:
 
-```cpp
-// Ultra-enhanced rendering pipeline
-cv::Mat enhanced_frame;
-cv::cvtColor(frame, lab_frame, cv::COLOR_BGR2Lab);
-clahe->apply(lab_channels[0], lab_channels[0]); // CLAHE enhancement
-cv::filter2D(enhanced_frame, sharpened, kernel); // Edge sharpening
+- **OpenCV**: Image/video processing and codec handling
+- **libsixel**: High-quality SIXEL graphics encoding
+- **cpr**: HTTP client for URL downloads
+- **ffmpeg**: Audio playback synchronization
 
-// Perceptual luminance with gamma correction  
-double r = std::pow(pixel[2] / 255.0, 2.2);
-double g = std::pow(pixel[1] / 255.0, 2.2); 
-double b = std::pow(pixel[0] / 255.0, 2.2);
-double luma = std::pow(0.2126 * r + 0.7152 * g + 0.0722 * b, 1.0/2.2) * 255.0;
-```
+### Rendering Pipeline
 
-### Audio-Video Synchronization
+1. **Input Processing**: Image loading, URL downloading, or video frame extraction
+2. **Preprocessing**: Contrast/brightness adjustment, aspect ratio calculation
+3. **Scaling**: Terminal-aware resizing with configurable interpolation
+4. **Mode Selection**: SIXEL, EXACT, ASCII_COLOR, or ASCII_GRAY rendering
+5. **Character Mapping**: Smart luminance-to-character conversion (ASCII modes)
+6. **Dithering**: Optional Floyd-Steinberg or Atkinson error diffusion
+7. **Output**: ANSI escape sequences or SIXEL data streams
 
-The player implements sophisticated timing control:
+### Performance Optimizations
 
-```cpp
-// High-precision frame timing
-auto frame_duration_ns = std::chrono::nanoseconds(static_cast<long long>(1000000000.0 / fps));
-auto target_frame_time = start_time + (frame_duration_ns * frame_number);
-
-// Smart frame skipping
-if (frame_number < target_frame_number) {
-    int frames_behind = target_frame_number - frame_number;
-    if (frames_behind > 2) {
-        // Skip frames to catch up
-    }
-}
-```
-
-### Video Processing Architecture
-
-```cpp
-// Video processing flow
-// Reader thread (pre-decode + pre-scale into a bounded queue)
-// Main thread: encode to SIXEL and pace using steady_clock
-```
-
-## Performance Optimizations
-
-### Frame Timing Optimizations
-
-- **Predecode Queue**: Background thread decodes and scales frames into a bounded queue
-- **Target FPS Downsampling**: Time-based input frame skipping to match a stable render rate
-- **Adaptive Frame Skipping**: Drops multiple stale frames at once when far behind
-- **Steady Clock Pacing**: `std::chrono::steady_clock` with sleep-until pacing
-- **Buffered I/O**: Unit-buffered output plus explicit flush to avoid terminal buffering stalls
-- **Memory Pre-allocation**: Reserved string buffers to avoid reallocations
-
-### Video Quality / Throughput Settings
-
-```cpp
-// Adaptive scaling based on FPS
-// Fit modes:
-// - CONTAIN: keep aspect within terminal bounds (no crop)
-// - COVER: fill entire terminal (may crop)
-// - STRETCH: fill width and height (distorts aspect)
-
-// Fast pre-scaling:
-// options.fastResize = true; // use INTER_NEAREST for maximum FPS
-```
-
-### SIXEL Optimization
-
-- **Palette Size**: Configurable color palette (typically 256)
-- **Static Palette (optional)**: Reuse first-frame palette for more stable colors and less overhead
-- **Adaptive Palette (optional)**: Shrink palette when behind, restore when caught up
-- **Interpolation**: INTER_NEAREST for speed (when `fastResize=true`), INTER_AREA for quality
+- **Predecode Queue**: Background threading for video frame preprocessing
+- **Adaptive Quality**: Dynamic palette and scale adjustments under load  
+- **Frame Pacing**: Precise timing control with `std::chrono::steady_clock`
+- **Memory Management**: Pre-allocated buffers and efficient string handling
+- **Hardware Acceleration**: Optional ffmpeg hardware decode pipeline
+- **Tiled Updates**: Differential rendering for animated content
 
 ## SIXEL Terminal Support
 
@@ -368,16 +284,22 @@ Main rendering engine with the following public methods:
 class Sakura {
 public:
     // Image rendering
-    bool renderFromUrl(const std::string &url, const RenderOptions &options);
-    bool renderFromMat(const cv::Mat &img, const RenderOptions &options);
+    bool renderFromUrl(std::string_view url, const RenderOptions &options) const;
+    bool renderFromUrl(std::string_view url) const;  // Uses default options
+    bool renderFromMat(const cv::Mat &img, const RenderOptions &options) const;
+    
+    // Grid rendering
+    bool renderGridFromUrls(const std::vector<std::string> &urls, int cols,
+                           const RenderOptions &options) const;
     
     // Video/GIF rendering  
-    bool renderVideoFromFile(const std::string &path, const RenderOptions &options);
-    bool renderVideoFromUrl(const std::string &url, const RenderOptions &options);
-    bool renderGifFromUrl(const std::string &url, const RenderOptions &options);
+    bool renderGifFromUrl(std::string_view gifUrl, const RenderOptions &options) const;
+    bool renderVideoFromUrl(std::string_view videoUrl, const RenderOptions &options) const;
+    bool renderVideoFromFile(std::string_view videoPath, const RenderOptions &options) const;
     
-    // SIXEL rendering
-    std::string renderSixel(const cv::Mat &img, int paletteSize = 256);
+    // Utility methods
+    std::vector<std::string> renderImageToLines(const cv::Mat &img, 
+                                               const RenderOptions &options) const;
 };
 ```
 
@@ -385,49 +307,50 @@ public:
 
 ```cpp
 struct RenderOptions {
-    int width = 0;
-    int height = 0;
-    int paletteSize = 256;
-    CharStyle style = ULTRA;         // NEW: Default to ultra-quality
-    RenderMode mode = EXACT;         // Enhanced ASCII by default
-    DitherMode dither = ATKINSON;    // NEW: Advanced Atkinson dithering
-    bool aspectRatio = true;
-    double contrast = 1.2;
-    double brightness = 0.0;
-    double terminalAspectRatio = 1.0;
-    int queueSize = 16;              // size of predecode queue
-    int prebufferFrames = 4;         // frames to prebuffer before audio
-    bool staticPalette = false;      // reuse first palette for all frames
-    FitMode fit = COVER;             // STRETCH, COVER, CONTAIN
-    bool fastResize = false;         // use INTER_NEAREST when true
-    // Throughput controls
-    double targetFps = 0.0;          // 0 = follow source FPS; otherwise downsample to this
-    bool adaptivePalette = false;
-    int minPaletteSize = 64;
-    int maxPaletteSize = 256;
-    bool adaptiveScale = false;      // dynamically adjust scale based on drop rate
-    double minScaleFactor = 0.80;
-    double maxScaleFactor = 1.00;
-    double scaleStep = 0.05;
+    int width = 0;                     // Target width (0 = auto)
+    int height = 0;                    // Target height (0 = auto)
+    int paletteSize = 256;             // SIXEL palette size
+    CharStyle style = SIMPLE;          // Character set style
+    RenderMode mode = EXACT;           // Rendering mode
+    DitherMode dither = NONE;          // Dithering algorithm
+    bool aspectRatio = true;           // Preserve aspect ratio
+    double contrast = 1.2;             // Contrast adjustment
+    double brightness = 0.0;           // Brightness adjustment
+    double terminalAspectRatio = 1.0;  // Terminal character aspect
+    int queueSize = 16;                // Predecode queue size
+    int prebufferFrames = 4;           // Frames to prebuffer
+    bool staticPalette = false;        // Reuse first palette
+    FitMode fit = COVER;               // Scaling behavior
+    bool fastResize = false;           // Use INTER_NEAREST
+    SixelQuality sixelQuality = HIGH;  // SIXEL quality setting
+    
+    // Performance controls
+    double targetFps = 0.0;            // Target FPS (0 = source FPS)
+    bool adaptivePalette = false;      // Dynamic palette sizing
+    int minPaletteSize = 64;           // Minimum palette size
+    int maxPaletteSize = 256;          // Maximum palette size
+    bool adaptiveScale = false;        // Dynamic scaling
+    double minScaleFactor = 0.80;      // Minimum scale factor
+    double maxScaleFactor = 1.00;      // Maximum scale factor
+    double scaleStep = 0.05;           // Scale adjustment step
+    
+    // Advanced features
+    bool hwAccelPipe = false;          // Hardware acceleration
+    bool tileUpdates = false;          // Tiled rendering
+    int tileWidth = 128;               // Tile width
+    int tileHeight = 64;               // Tile height
+    double tileDiffThreshold = 6.0;    // Tile change threshold
 };
 ```
 
-### Character Sets
+### Enums
 
 ```cpp
-enum CharStyle {
-    SIMPLE,     // " .:-=+*#%@" (10 chars)
-    DETAILED,   // Extended ASCII (69 chars)  
-    BLOCKS,     // " ░▒▓█" (5 levels)
-    ULTRA,      // " ▁▂▃▄▅▆▇█" (9 levels) - DEFAULT
-    MICRO       // Ultra-fine detail chars - PREMIUM
-};
-
-enum DitherMode {
-    NONE,
-    FLOYD_STEINBERG,    // Classic error diffusion
-    ATKINSON           // Advanced dithering - NEW
-};
+enum CharStyle { SIMPLE, DETAILED, BLOCKS, ULTRA, MICRO };
+enum RenderMode { EXACT, ASCII_COLOR, ASCII_GRAY, SIXEL };
+enum DitherMode { NONE, FLOYD_STEINBERG, ATKINSON };
+enum FitMode { STRETCH, COVER, CONTAIN };
+enum SixelQuality { LOW, HIGH };
 ```
 
 ## Examples
@@ -439,77 +362,68 @@ enum DitherMode {
 
 int main() {
     Sakura renderer;
-    RenderOptions options;
+    Sakura::RenderOptions options;
     
-    // Ultra-enhanced quality settings (DEFAULT)
-    options.mode = EXACT;           // Enhanced ASCII rendering
-    options.style = ULTRA;          // Ultra-quality block characters
-    options.dither = ATKINSON;      // Advanced dithering
+    // Configure for high-quality SIXEL rendering
+    options.mode = Sakura::SIXEL;
+    options.sixelQuality = Sakura::HIGH;
     options.paletteSize = 256;
-    options.width = 800;
-    options.height = 600;
-    options.queueSize = 48;
-    options.prebufferFrames = 12;
-    options.staticPalette = true;
-    options.fit = COVER;
-    options.fastResize = true;      // maximize FPS
-    options.targetFps = 30.0;       // stabilize rendering
-    options.adaptivePalette = true;
-    options.minPaletteSize = 64;
-    options.maxPaletteSize = 256;
-    options.adaptiveScale = true;   // auto-tune size when drops persist
-    options.minScaleFactor = 0.85;
-    options.maxScaleFactor = 1.00;
-    options.scaleStep = 0.05;
+    options.dither = Sakura::FLOYD_STEINBERG;
+    options.fit = Sakura::COVER;
+    options.aspectRatio = true;
     
-    // Render ultra-enhanced video with audio
+    // Render image from URL
+    renderer.renderFromUrl("https://example.com/image.jpg", options);
+    
+    // Render local video file
     renderer.renderVideoFromFile("video.mp4", options);
     
     return 0;
 }
 ```
 
-### Custom Image Processing
+### Custom ASCII Rendering
 
 ```cpp
-// Load and process image
-cv::Mat image = cv::imread("input.jpg");
-cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
+// Configure for enhanced ASCII mode
+Sakura::RenderOptions options;
+options.mode = Sakura::EXACT;           // Enhanced ASCII
+options.style = Sakura::ULTRA;          // Ultra-quality blocks
+options.dither = Sakura::ATKINSON;      // Advanced dithering
+options.contrast = 1.2;
+options.brightness = 10;
 
-// Render with custom options
-RenderOptions opts;
-opts.contrast = 1.2;
-opts.brightness = 10;
-renderer.renderFromMat(image, opts);
+renderer.renderFromMat(image, options);
 ```
 
-### Batch Processing
+### Performance-Optimized Video
 
 ```cpp
-// Process multiple images
-std::vector<std::string> urls = {
-    "https://example.com/img1.jpg",
-    "https://example.com/img2.jpg",
-    "https://example.com/img3.jpg"
-};
+// High-performance video settings
+Sakura::RenderOptions options;
+options.mode = Sakura::SIXEL;
+options.fastResize = true;              // Fast scaling
+options.targetFps = 30.0;               // Stable framerate
+options.queueSize = 48;                 // Large buffer
+options.adaptivePalette = true;         // Dynamic quality
+options.hwAccelPipe = true;             // Hardware decode
+options.tileUpdates = true;             // Efficient updates
 
-for (const auto& url : urls) {
-    renderer.renderFromUrl(url, options);
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-}
+renderer.renderVideoFromFile("large_video.mp4", options);
 ```
 
 ## TODO
 
-- [x] ~~Reduce frame drops to <=5%~~ **COMPLETED**
-- [x] ~~Ultra-enhanced ASCII quality~~ **COMPLETED - 300% improvement**  
-- [x] ~~HDR-like processing pipeline~~ **COMPLETED - CLAHE + sharpening**
-- [x] ~~Sub-pixel precision rendering~~ **COMPLETED - 2x2 sampling**
-- [x] ~~Advanced dithering algorithms~~ **COMPLETED - Atkinson + Floyd-Steinberg**
-- [x] ~~Extended Unicode character sets~~ **COMPLETED - 30+ block characters**
-- [ ] Create error exception classes
-- [ ] GPU acceleration support
-- [ ] Real-time quality adaptation
+- [ ] Add error handling and exception classes
+- [ ] Implement unit test suite
+- [ ] Add configuration file support
+- [ ] GPU acceleration for image processing
+- [ ] WebM and additional codec support
+- [ ] Real-time streaming input support
+- [ ] Plugin architecture for custom renderers
+- [ ] Terminal capability auto-detection
+- [ ] Improved memory management for large videos
+- [ ] Cross-platform Windows support optimization
 
 ## Troubleshooting
 
@@ -562,27 +476,16 @@ ffmpeg -hwaccel auto -i input.mp4 output.mp4
 
 ### Debug Mode
 
-```cpp
-// Enable debug output
-#define SAKURA_DEBUG 1
-
-// Check rendering statistics
-std::cout << "Frames rendered: " << frames_rendered << std::endl;
-std::cout << "Frames dropped: " << frames_dropped << std::endl;
-std::cout << "Drop rate: " << (frames_dropped * 100.0 / total_frames) << "%" << std::endl;
-```
-
-### Log Analysis
-
-Monitor performance metrics during playback:
+Enable debug builds for development:
 
 ```bash
-# Terminal output shows real-time stats
-Frame: 450/1800 Dropped: 23 Audio: ON
+# Build with debug information
+cmake -DCMAKE_BUILD_TYPE=Debug ..
+make
 
-# Calculate performance
-Drop Rate: 23/450 = 5.1%  # Acceptable: <10%
-Render Rate: 94.9%         # Good: >90%
+# Run with debugging tools
+gdb ./sakura
+valgrind --leak-check=full ./sakura
 ```
 
 ## Contributing
@@ -590,29 +493,40 @@ Render Rate: 94.9%         # Good: >90%
 ### Development Setup
 
 ```bash
+# Clone the repository
 git clone https://github.com/Sarthak2143/sakura.git
 cd sakura
 
 # Install development dependencies
-sudo apt install clang-format cppcheck valgrind
+sudo apt install cmake build-essential libopencv-dev libsixel-dev
 
-# Build with debug symbols
+# Build with debug information
+mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j$(nproc)
 ```
+
 ### Testing
 
 ```bash
-# Run basic functionality tests
-./test_suite.sh
+# Test basic functionality
+./sakura --help
+./sakura --image https://picsum.photos/800/600
 
-# Memory leak detection  
-valgrind --leak-check=full ./sakura
+# Test with local media files
+./sakura --local-video media/example.mp4
 
-# Performance profiling
-perf record ./sakura
-perf report
+# Memory debugging
+valgrind --leak-check=full ./sakura --image test.jpg
 ```
+
+### Code Style
+
+- Follow C++17 standards
+- Use meaningful variable names  
+- Add comments for complex algorithms
+- Keep functions focused and concise
+- Use const-correctness where applicable
 
 ## Acknowledgments
 
