@@ -16,8 +16,7 @@ A high-performance minimal terminal-based multimedia library that renders images
 
 
 Video showcasing rendering video with smooth playback:
-![video example](examples/video.mp4)
-
+<video src='examples/video.mp4' width=180/>
 ## Features
 
 ### Core Capabilities
