@@ -15,8 +15,8 @@ A high-performance minimal terminal-based multimedia library that renders images
 - [Troubleshooting](#troubleshooting)
 
 
-Video showcasing rendering video with smooth playback:
-<video src='examples/video.mp4' width=180/>
+![image using sixel](examples/art.png)
+
 ## Features
 
 ### Core Capabilities
